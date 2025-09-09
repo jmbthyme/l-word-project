@@ -35,11 +35,11 @@ export const WordCloudGenerator: React.FC<WordCloudGeneratorProps> = ({
     const wordFrequency = calculateWordFrequency(data);
     const items = generateWordCloudItems(wordFrequency, fonts);
     const layoutResult = generateWordCloudLayout(items, config);
-    
+
     if (onWordsGenerated) {
       onWordsGenerated(layoutResult.words);
     }
-    
+
     return layoutResult;
   }, [data, config, fonts, onWordsGenerated]);
 
@@ -79,14 +79,14 @@ export const WordCloudGenerator: React.FC<WordCloudGeneratorProps> = ({
  */
 export function calculateWordFrequency(data: PersonData[]): Map<string, number> {
   const frequency = new Map<string, number>();
-  
+
   data.forEach(item => {
     const word = item.word.toLowerCase().trim();
     if (word) {
       frequency.set(word, (frequency.get(word) || 0) + 1);
     }
   });
-  
+
   return frequency;
 }
 
@@ -107,27 +107,27 @@ export function generateWordCloudItems(
   const words = Array.from(wordFrequency.entries());
   const maxFrequency = Math.max(...wordFrequency.values());
   const minFrequency = Math.min(...wordFrequency.values());
-  
+
   // Define size range for words (in pixels)
   const MIN_SIZE = 16;
   const MAX_SIZE = 72;
-  
+
   return words.map(([text, frequency]) => {
     // Calculate size based on frequency (logarithmic scaling for better distribution)
-    const normalizedFreq = frequency === maxFrequency && maxFrequency === minFrequency 
-      ? 1 
+    const normalizedFreq = frequency === maxFrequency && maxFrequency === minFrequency
+      ? 1
       : (Math.log(frequency) - Math.log(minFrequency)) / (Math.log(maxFrequency) - Math.log(minFrequency));
-    
+
     const size = MIN_SIZE + (MAX_SIZE - MIN_SIZE) * normalizedFreq;
-    
+
     // Select random font and weight
     const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
     const randomWeight = randomFont.weights[Math.floor(Math.random() * randomFont.weights.length)];
-    
+
     // Generate random color (optional - can be overridden)
     const colors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    
+
     return {
       text,
       size: Math.round(size),
@@ -161,27 +161,27 @@ export function generateWordCloudLayout(
   const canvasDimensions = getCanvasDimensions(config);
   const centerX = canvasDimensions.width / 2;
   const centerY = canvasDimensions.height / 2;
-  
+
   // Sort items by size (largest first for better placement)
   const sortedItems = [...items].sort((a, b) => b.size - a.size);
   const positionedWords: WordCloudItem[] = [];
-  
+
   // Place each word using spiral positioning with collision detection
   for (const item of sortedItems) {
     const position = findOptimalPosition(item, positionedWords, centerX, centerY, canvasDimensions);
-    
+
     const positionedWord: WordCloudItem = {
       ...item,
       x: position.x,
       y: position.y
     };
-    
+
     positionedWords.push(positionedWord);
   }
-  
+
   // Calculate bounds of the final layout
   const bounds = calculateLayoutBounds(positionedWords);
-  
+
   return {
     words: positionedWords,
     bounds
@@ -199,9 +199,9 @@ function getCanvasDimensions(config: WordCloudConfig): { width: number; height: 
   const A4_HEIGHT = 3508; // 11.69 inches * 300 DPI
   const A3_WIDTH = 3508; // 11.69 inches * 300 DPI
   const A3_HEIGHT = 4961; // 16.54 inches * 300 DPI
-  
+
   let width: number, height: number;
-  
+
   if (config.paperSize === 'A4') {
     width = A4_WIDTH;
     height = A4_HEIGHT;
@@ -209,12 +209,12 @@ function getCanvasDimensions(config: WordCloudConfig): { width: number; height: 
     width = A3_WIDTH;
     height = A3_HEIGHT;
   }
-  
+
   // Swap dimensions for landscape orientation
   if (config.orientation === 'landscape') {
     [width, height] = [height, width];
   }
-  
+
   return { width, height };
 }
 
@@ -235,34 +235,34 @@ function findOptimalPosition(
   canvasDimensions: { width: number; height: number }
 ): { x: number; y: number } {
   const wordBounds = getTextBounds(word);
-  
+
   // Try center position first
-  if (!hasCollision(word, centerX, centerY, existingWords) && 
-      isWithinBounds(centerX, centerY, wordBounds, canvasDimensions)) {
+  if (!hasCollision(word, centerX, centerY, existingWords) &&
+    isWithinBounds(centerX, centerY, wordBounds, canvasDimensions)) {
     return { x: centerX, y: centerY };
   }
-  
+
   // Use spiral search to find optimal position
   const maxRadius = Math.max(canvasDimensions.width, canvasDimensions.height) / 2;
   const angleStep = Math.PI / 8; // 22.5 degrees
   const radiusStep = 10;
-  
+
   for (let radius = radiusStep; radius <= maxRadius; radius += radiusStep) {
     const angleSteps = Math.max(8, Math.floor(2 * Math.PI * radius / 50)); // More angles for larger radii
     const currentAngleStep = (2 * Math.PI) / angleSteps;
-    
+
     for (let i = 0; i < angleSteps; i++) {
       const angle = i * currentAngleStep;
       const x = centerX + radius * Math.cos(angle);
       const y = centerY + radius * Math.sin(angle);
-      
-      if (isWithinBounds(x, y, wordBounds, canvasDimensions) && 
-          !hasCollision(word, x, y, existingWords)) {
+
+      if (isWithinBounds(x, y, wordBounds, canvasDimensions) &&
+        !hasCollision(word, x, y, existingWords)) {
         return { x, y };
       }
     }
   }
-  
+
   // Fallback: place at center even if there's collision
   console.warn(`Could not find collision-free position for word: ${word.text}`);
   return { x: centerX, y: centerY };
@@ -284,17 +284,17 @@ function hasCollision(
 ): boolean {
   const wordBounds = getTextBounds(word);
   const padding = 5; // Minimum spacing between words
-  
+
   const wordRect = {
     left: x - wordBounds.width / 2 - padding,
     right: x + wordBounds.width / 2 + padding,
     top: y - wordBounds.height / 2 - padding,
     bottom: y + wordBounds.height / 2 + padding
   };
-  
+
   return existingWords.some(existingWord => {
     if (!existingWord.x || !existingWord.y) return false;
-    
+
     const existingBounds = getTextBounds(existingWord);
     const existingRect = {
       left: existingWord.x - existingBounds.width / 2 - padding,
@@ -302,12 +302,12 @@ function hasCollision(
       top: existingWord.y - existingBounds.height / 2 - padding,
       bottom: existingWord.y + existingBounds.height / 2 + padding
     };
-    
+
     // Check rectangle intersection
     return !(wordRect.right < existingRect.left ||
-             wordRect.left > existingRect.right ||
-             wordRect.bottom < existingRect.top ||
-             wordRect.top > existingRect.bottom);
+      wordRect.left > existingRect.right ||
+      wordRect.bottom < existingRect.top ||
+      wordRect.top > existingRect.bottom);
   });
 }
 
@@ -326,7 +326,7 @@ function isWithinBounds(
   canvasDimensions: { width: number; height: number }
 ): boolean {
   const margin = 20; // Margin from canvas edges
-  
+
   return (
     x - wordBounds.width / 2 >= margin &&
     x + wordBounds.width / 2 <= canvasDimensions.width - margin &&
@@ -344,10 +344,10 @@ function getTextBounds(word: WordCloudItem): { width: number; height: number } {
   // Approximate character width based on font size and weight
   const baseCharWidth = word.size * 0.6; // Rough approximation
   const weightMultiplier = word.weight >= 700 ? 1.2 : word.weight >= 500 ? 1.1 : 1.0;
-  
+
   const width = word.text.length * baseCharWidth * weightMultiplier;
   const height = word.size * 1.2; // Line height approximation
-  
+
   return { width, height };
 }
 
@@ -367,12 +367,12 @@ function calculateLayoutBounds(words: WordCloudItem[]): {
   if (words.length === 0) {
     return { width: 0, height: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 };
   }
-  
+
   let minX = Infinity;
   let maxX = -Infinity;
   let minY = Infinity;
   let maxY = -Infinity;
-  
+
   words.forEach(word => {
     if (word.x !== undefined && word.y !== undefined) {
       const bounds = getTextBounds(word);
@@ -380,14 +380,14 @@ function calculateLayoutBounds(words: WordCloudItem[]): {
       const right = word.x + bounds.width / 2;
       const top = word.y - bounds.height / 2;
       const bottom = word.y + bounds.height / 2;
-      
+
       minX = Math.min(minX, left);
       maxX = Math.max(maxX, right);
       minY = Math.min(minY, top);
       maxY = Math.max(maxY, bottom);
     }
   });
-  
+
   return {
     width: maxX - minX,
     height: maxY - minY,

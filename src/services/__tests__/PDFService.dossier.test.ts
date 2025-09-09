@@ -85,11 +85,9 @@ describe('PDFService - Dossier Generation', () => {
       expect(mockPdf).toHaveBeenCalledWith(expect.any(Object));
     });
 
-    it('should handle empty data array', async () => {
-      const result = await pdfService.generateDossierPDF([], mockImages);
-
-      expect(result).toBeInstanceOf(Blob);
-      expect(mockPdf).toHaveBeenCalledTimes(1);
+    it('should reject empty data array', async () => {
+      await expect(pdfService.generateDossierPDF([], mockImages))
+        .rejects.toThrow('Data array cannot be empty');
     });
 
     it('should handle empty images map', async () => {
@@ -115,7 +113,9 @@ describe('PDFService - Dossier Generation', () => {
         .rejects.toThrow('Dossier PDF generation failed: Unknown error');
     });
 
-    it('should handle large datasets', async () => {
+    it('should handle large datasets with warning', async () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      
       // Create a large dataset
       const largeDataset: PersonData[] = Array.from({ length: 100 }, (_, i) => ({
         person: `Person ${i + 1}`,
@@ -128,6 +128,24 @@ describe('PDFService - Dossier Generation', () => {
 
       expect(result).toBeInstanceOf(Blob);
       expect(mockPdf).toHaveBeenCalledTimes(1);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Large dataset detected')
+      );
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('should reject datasets that are too large', async () => {
+      // Create an extremely large dataset
+      const extremelyLargeDataset: PersonData[] = Array.from({ length: 1001 }, (_, i) => ({
+        person: `Person ${i + 1}`,
+        word: `Word${i + 1}`,
+        description: `Description for person ${i + 1}`,
+        picture: `person${i + 1}.jpg`
+      }));
+
+      await expect(pdfService.generateDossierPDF(extremelyLargeDataset, mockImages))
+        .rejects.toThrow('Dataset too large. Maximum 1000 items supported for PDF generation.');
     });
 
     it('should handle special characters in data', async () => {
@@ -163,6 +181,113 @@ describe('PDFService - Dossier Generation', () => {
     });
   });
 
+  describe('data validation', () => {
+    it('should reject non-array data', async () => {
+      await expect(pdfService.generateDossierPDF({} as any, mockImages))
+        .rejects.toThrow('Data must be an array');
+    });
+
+    it('should reject empty data array', async () => {
+      await expect(pdfService.generateDossierPDF([], mockImages))
+        .rejects.toThrow('Data array cannot be empty');
+    });
+
+    it('should validate person data fields', async () => {
+      const invalidData = [
+        {
+          person: '',
+          word: 'Innovation',
+          description: 'Description',
+          picture: 'image.jpg'
+        }
+      ];
+
+      await expect(pdfService.generateDossierPDF(invalidData, mockImages))
+        .rejects.toThrow('Invalid person name at index 0');
+    });
+
+    it('should validate word fields', async () => {
+      const invalidData = [
+        {
+          person: 'John Doe',
+          word: '',
+          description: 'Description',
+          picture: 'image.jpg'
+        }
+      ];
+
+      await expect(pdfService.generateDossierPDF(invalidData, mockImages))
+        .rejects.toThrow('Invalid word at index 0');
+    });
+
+    it('should validate description fields', async () => {
+      const invalidData = [
+        {
+          person: 'John Doe',
+          word: 'Innovation',
+          description: '',
+          picture: 'image.jpg'
+        }
+      ];
+
+      await expect(pdfService.generateDossierPDF(invalidData, mockImages))
+        .rejects.toThrow('Invalid description at index 0');
+    });
+
+    it('should validate picture fields', async () => {
+      const invalidData = [
+        {
+          person: 'John Doe',
+          word: 'Innovation',
+          description: 'Description',
+          picture: ''
+        }
+      ];
+
+      await expect(pdfService.generateDossierPDF(invalidData, mockImages))
+        .rejects.toThrow('Invalid picture filename at index 0');
+    });
+  });
+
+  describe('image optimization', () => {
+    it('should handle large images with warning', async () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      
+      // Create a large base64 image (simulate 1MB image)
+      const largeImageData = 'data:image/jpeg;base64,' + 'A'.repeat(1400000);
+      const largeImages = new Map([['large.jpg', largeImageData]]);
+
+      const result = await pdfService.generateDossierPDF(mockPersonData, largeImages);
+
+      expect(result).toBeInstanceOf(Blob);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Large image detected')
+      );
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('should skip problematic images gracefully', async () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      
+      // Create images map with invalid data
+      const problematicImages = new Map([
+        ['valid.jpg', 'data:image/jpeg;base64,validdata'],
+        ['invalid.jpg', null as any] // This will cause processing to fail
+      ]);
+
+      const result = await pdfService.generateDossierPDF(mockPersonData, problematicImages);
+
+      expect(result).toBeInstanceOf(Blob);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to process image invalid.jpg:',
+        expect.any(Error)
+      );
+      
+      consoleSpy.mockRestore();
+    });
+  });
+
   describe('error handling', () => {
     it('should log errors to console', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -175,6 +300,41 @@ describe('PDFService - Dossier Generation', () => {
       expect(consoleSpy).toHaveBeenCalledWith('Failed to generate Dossier PDF:', error);
       
       consoleSpy.mockRestore();
+    });
+
+    it('should provide specific error messages for memory issues', async () => {
+      const memoryError = new Error('memory allocation failed');
+      mockToBlob.mockRejectedValue(memoryError);
+
+      await expect(pdfService.generateDossierPDF(mockPersonData, mockImages))
+        .rejects.toThrow('Dossier PDF generation failed due to memory constraints');
+    });
+
+    it('should provide specific error messages for timeout issues', async () => {
+      const timeoutError = new Error('timeout exceeded');
+      mockToBlob.mockRejectedValue(timeoutError);
+
+      await expect(pdfService.generateDossierPDF(mockPersonData, mockImages))
+        .rejects.toThrow('Dossier PDF generation timed out');
+    });
+
+    it('should handle empty blob generation', async () => {
+      mockToBlob.mockResolvedValue(new Blob([], { type: 'application/pdf' }));
+
+      await expect(pdfService.generateDossierPDF(mockPersonData, mockImages))
+        .rejects.toThrow('Generated PDF is empty or invalid');
+    });
+
+    it('should retry PDF generation on failure', async () => {
+      // First attempt fails, second succeeds
+      mockToBlob
+        .mockRejectedValueOnce(new Error('Temporary failure'))
+        .mockResolvedValueOnce(new Blob(['mock pdf content'], { type: 'application/pdf' }));
+
+      const result = await pdfService.generateDossierPDF(mockPersonData, mockImages);
+
+      expect(result).toBeInstanceOf(Blob);
+      expect(mockToBlob).toHaveBeenCalledTimes(2);
     });
   });
 });

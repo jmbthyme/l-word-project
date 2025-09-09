@@ -101,18 +101,43 @@ describe('DossierGenerator', () => {
     expect(images[0]).toHaveAttribute('src', mockImages.get('john_doe.jpg'));
   });
 
-  it('handles missing images gracefully', () => {
+  it('handles missing images gracefully with placeholder', () => {
     const emptyImages = new Map<string, string>();
-    const { queryAllByTestId } = render(
+    const { queryAllByTestId, getAllByTestId } = render(
       <DossierGenerator data={mockPersonData.slice(0, 1)} images={emptyImages} />
     );
 
-    // Should not render any images
+    // Should not render any actual images
     const images = queryAllByTestId('pdf-image');
     expect(images).toHaveLength(0);
+
+    // Should render placeholder text
+    const texts = getAllByTestId('pdf-text');
+    const textContents = texts.map(text => text.textContent);
+    expect(textContents).toContain('john_doe.jpg');
+    expect(textContents).toContain('Image not found');
   });
 
-  it('calculates pagination correctly with 2 items per page', () => {
+  it('handles invalid image data gracefully', () => {
+    const invalidImages = new Map([
+      ['john_doe.jpg', 'invalid-image-data']
+    ]);
+    const { queryAllByTestId, getAllByTestId } = render(
+      <DossierGenerator data={mockPersonData.slice(0, 1)} images={invalidImages} />
+    );
+
+    // Should not render actual images for invalid data
+    const images = queryAllByTestId('pdf-image');
+    expect(images).toHaveLength(0);
+
+    // Should render placeholder instead
+    const texts = getAllByTestId('pdf-text');
+    const textContents = texts.map(text => text.textContent);
+    expect(textContents).toContain('john_doe.jpg');
+    expect(textContents).toContain('Image not found');
+  });
+
+  it('calculates pagination correctly with default 2 items per page', () => {
     // Test with exactly 2 items (should be 1 page)
     const { getAllByTestId: getPages1 } = render(
       <DossierGenerator data={mockPersonData.slice(0, 2)} images={mockImages} />
@@ -141,6 +166,46 @@ describe('DossierGenerator', () => {
     expect(getAllByTestId('pdf-page')).toHaveLength(3);
   });
 
+  it('respects custom configuration for items per page', () => {
+    const config = {
+      paperSize: 'A4' as const,
+      orientation: 'portrait' as const,
+      itemsPerPage: 1,
+      highQuality: true
+    };
+
+    // Test with 2 items but 1 item per page (should be 2 pages)
+    const { getAllByTestId } = render(
+      <DossierGenerator 
+        data={mockPersonData.slice(0, 2)} 
+        images={mockImages} 
+        config={config}
+      />
+    );
+    expect(getAllByTestId('pdf-page')).toHaveLength(2);
+  });
+
+  it('respects custom paper size configuration', () => {
+    const config = {
+      paperSize: 'A3' as const,
+      orientation: 'landscape' as const,
+      itemsPerPage: 2,
+      highQuality: true
+    };
+
+    const { getAllByTestId } = render(
+      <DossierGenerator 
+        data={mockPersonData.slice(0, 1)} 
+        images={mockImages} 
+        config={config}
+      />
+    );
+
+    const pages = getAllByTestId('pdf-page');
+    expect(pages[0]).toHaveAttribute('data-size', 'A3');
+    expect(pages[0]).toHaveAttribute('data-orientation', 'landscape');
+  });
+
   it('includes header and footer on each page', () => {
     const { getAllByTestId } = render(
       <DossierGenerator data={mockPersonData} images={mockImages} />
@@ -156,9 +221,31 @@ describe('DossierGenerator', () => {
     expect(textContents).toContain('Page 1 of 2');
     expect(textContents).toContain('Page 2 of 2');
 
-    // Should include footer with date
-    const dateText = new Date().toLocaleDateString();
+    // Should include footer with date and total entries
     expect(textContents.filter(text => text?.includes('Generated on')).length).toBeGreaterThan(0);
+    expect(textContents.filter(text => text?.includes('Total entries: 4')).length).toBeGreaterThan(0);
+  });
+
+  it('truncates very long descriptions', () => {
+    const longDescriptionData = [{
+      person: 'John Doe',
+      word: 'Innovation',
+      description: 'A'.repeat(600), // Very long description
+      picture: 'john_doe.jpg'
+    }];
+
+    const { getAllByTestId } = render(
+      <DossierGenerator data={longDescriptionData} images={mockImages} />
+    );
+
+    const texts = getAllByTestId('pdf-text');
+    const descriptionText = texts.find(text => 
+      text.textContent?.includes('A'.repeat(100))
+    );
+
+    // Should truncate long descriptions
+    expect(descriptionText?.textContent).toContain('...');
+    expect(descriptionText?.textContent?.length).toBeLessThan(600);
   });
 
   it('handles empty data array', () => {

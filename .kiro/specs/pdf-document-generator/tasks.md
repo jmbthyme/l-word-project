@@ -93,7 +93,13 @@
   - Write tests for dossier layout and pagination
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 8. Implement Dossier PDF export
+- [x] 8. Implement Dossier PDF export
+
+
+
+
+
+
   - Add PDF generation for dossier format using A4 portrait
   - Implement proper page breaks and content flow
   - Ensure high-quality output optimized for printing

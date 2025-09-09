@@ -1,3 +1,6 @@
 export { DataLoader } from './DataLoader';
+export { DocumentControls } from './DocumentControls';
+export type { DocumentControlsProps } from './DocumentControls';
+export { DossierPreview } from './DossierPreview';
 export { WordCloudGenerator } from './WordCloudGenerator';
 export type { WordCloudGeneratorProps, WordCloudLayoutResult } from './WordCloudGenerator';

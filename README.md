@@ -1,6 +1,44 @@
-# React + TypeScript + Vite
+# L-Word Project
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A PDF document generator built with React, TypeScript, Vite, and Tailwind CSS. This project provides a web interface for creating and customizing PDF documents.
+
+## Features
+
+- Modern React application with TypeScript
+- PDF generation using @react-pdf/renderer
+- Responsive UI with Tailwind CSS
+- Google Fonts integration (Inter)
+- Development server with hot module replacement
+
+## Getting Started
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open your browser and navigate to `http://localhost:5173/`
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+## Tech Stack
+
+- **React 19** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool and dev server
+- **Tailwind CSS** - Utility-first CSS framework
+- **@react-pdf/renderer** - PDF generation
+- **ESLint** - Code linting
 
 Currently, two official plugins are available:
 

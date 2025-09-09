@@ -93,14 +93,27 @@ export class PDFService {
   }
 
   /**
-   * Generate Dossier PDF (placeholder for future implementation)
+   * Generate Dossier PDF
    * @param data Array of PersonData
    * @param images Map of filename to base64 image data
    * @returns Promise resolving to PDF Blob
    */
   async generateDossierPDF(data: PersonData[], images: Map<string, string>): Promise<Blob> {
-    // This will be implemented in a future task
-    throw new Error('Dossier PDF generation not yet implemented');
+    try {
+      // Import DossierGenerator dynamically to avoid circular dependencies
+      const { DossierGenerator } = await import('../components/DossierGenerator');
+      
+      // Create PDF document using DossierGenerator
+      const DossierDocument = () => 
+        React.createElement(DossierGenerator, { data, images });
+
+      // Generate PDF blob
+      const blob = await pdf(React.createElement(DossierDocument)).toBlob();
+      return blob;
+    } catch (error) {
+      console.error('Failed to generate Dossier PDF:', error);
+      throw new Error(`Dossier PDF generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**

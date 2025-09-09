@@ -11,7 +11,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError }) =
   const [isLoading, setIsLoading] = useState(false);
   const [loadedData, setLoadedData] = useState<PersonData[] | null>(null);
   const [loadedImages, setLoadedImages] = useState<Map<string, string>>(new Map());
-  
+
   const jsonFileRef = useRef<HTMLInputElement>(null);
   const imageFilesRef = useRef<HTMLInputElement>(null);
 
@@ -24,14 +24,14 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError }) =
       const text = await readFileAsText(file);
       const jsonData = JSON.parse(text);
       const validatedData = validatePersonData(jsonData);
-      
+
       setLoadedData(validatedData);
-      
+
       // If images are already loaded, trigger onDataLoad
       if (loadedImages.size > 0) {
         onDataLoad(validatedData, loadedImages);
       }
-      
+
     } catch (error) {
       if (error instanceof SyntaxError) {
         onError('Invalid JSON format. Please check your file.');
@@ -53,12 +53,12 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError }) =
     try {
       const imageMap = await loadImages(files);
       setLoadedImages(imageMap);
-      
+
       // If JSON data is already loaded, trigger onDataLoad
       if (loadedData) {
         onDataLoad(loadedData, imageMap);
       }
-      
+
     } catch (error) {
       if (error instanceof Error) {
         onError(`Image loading failed: ${error.message}`);
@@ -85,7 +85,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError }) =
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      
+
       if (!validateImageFile(file)) {
         throw new Error(`Invalid image format for file "${file.name}". Supported formats: PNG, JPG, JPEG`);
       }
@@ -117,7 +117,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError }) =
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4">Load Data</h2>
-      
+
       <div className="space-y-4">
         {/* JSON File Input */}
         <div>

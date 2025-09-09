@@ -36,7 +36,7 @@ export class FontService {
    */
   async loadGoogleFonts(families: string[]): Promise<void> {
     const fontsToLoad = families.filter(family => !this.loadedFonts.has(family));
-    
+
     if (fontsToLoad.length === 0) {
       return;
     }
@@ -45,7 +45,7 @@ export class FontService {
       // Create font face declarations for each font
       const fontPromises = fontsToLoad.map(family => this.loadSingleFont(family));
       await Promise.all(fontPromises);
-      
+
       // Mark fonts as loaded
       fontsToLoad.forEach(family => this.loadedFonts.add(family));
     } catch (error) {
@@ -68,7 +68,7 @@ export class FontService {
     // Create CSS link for Google Fonts
     const weightsParam = fontData.weights.join(';');
     const fontUrl = `${this.GOOGLE_FONTS_BASE_URL}?family=${encodeURIComponent(family)}:wght@${weightsParam}&display=swap`;
-    
+
     return new Promise((resolve, reject) => {
       // Check if font link already exists
       const existingLink = document.querySelector(`link[href*="${encodeURIComponent(family)}"]`);
@@ -81,17 +81,17 @@ export class FontService {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = fontUrl;
-      
+
       link.onload = () => {
         // Cache the font data
         this.fontCache.set(family, fontData);
         resolve();
       };
-      
+
       link.onerror = () => {
         reject(new Error(`Failed to load font: ${family}`));
       };
-      
+
       document.head.appendChild(link);
     });
   }
@@ -104,16 +104,16 @@ export class FontService {
   getRandomFontCombination(count: number = 5): GoogleFont[] {
     const availableFonts = [...this.WORD_CLOUD_FONTS];
     const selectedFonts: GoogleFont[] = [];
-    
+
     // Ensure we don't request more fonts than available
     const actualCount = Math.min(count, availableFonts.length);
-    
+
     for (let i = 0; i < actualCount; i++) {
       const randomIndex = Math.floor(Math.random() * availableFonts.length);
       const selectedFont = availableFonts.splice(randomIndex, 1)[0];
       selectedFonts.push(selectedFont);
     }
-    
+
     return selectedFonts;
   }
 
@@ -129,10 +129,10 @@ export class FontService {
       Math.max(3, Math.ceil(wordCount / 5)), // At least 3 fonts, more for larger clouds
       this.WORD_CLOUD_FONTS.length
     );
-    
+
     const selectedFonts = this.getRandomFontCombination(fontCount);
     const fontFamilies = selectedFonts.map(font => font.family);
-    
+
     try {
       await this.loadGoogleFonts(fontFamilies);
       return selectedFonts;

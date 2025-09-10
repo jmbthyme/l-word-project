@@ -9,7 +9,7 @@ import {
 } from '../schemas';
 
 describe('PersonDataSchema', () => {
-  it('should validate correct PersonData object', () => {
+  it('should validate complete PersonData object', () => {
     const validData = {
       person: 'John Doe',
       word: 'Innovation',
@@ -21,7 +21,39 @@ describe('PersonDataSchema', () => {
     expect(result).toEqual(validData);
   });
 
-  it('should reject empty strings', () => {
+  it('should validate PersonData with only required fields', () => {
+    const validData = {
+      person: 'Jane Smith',
+      word: 'Creativity'
+    };
+
+    const result = PersonDataSchema.parse(validData);
+    expect(result).toEqual(validData);
+  });
+
+  it('should validate PersonData with description but no picture', () => {
+    const validData = {
+      person: 'Bob Wilson',
+      word: 'Leadership',
+      description: 'Natural leader with excellent communication skills.'
+    };
+
+    const result = PersonDataSchema.parse(validData);
+    expect(result).toEqual(validData);
+  });
+
+  it('should validate PersonData with picture but no description', () => {
+    const validData = {
+      person: 'Alice Johnson',
+      word: 'Innovation',
+      picture: 'alice.jpg'
+    };
+
+    const result = PersonDataSchema.parse(validData);
+    expect(result).toEqual(validData);
+  });
+
+  it('should reject empty person name', () => {
     const invalidData = {
       person: '',
       word: 'Innovation',
@@ -31,16 +63,55 @@ describe('PersonDataSchema', () => {
 
     expect(() => PersonDataSchema.parse(invalidData)).toThrow();
   });
+
+  it('should reject empty word', () => {
+    const invalidData = {
+      person: 'John Doe',
+      word: '',
+      description: 'A creative thinker',
+      picture: 'john.jpg'
+    };
+
+    expect(() => PersonDataSchema.parse(invalidData)).toThrow();
+  });
 });
 
 describe('PersonDataArraySchema', () => {
-  it('should validate array of PersonData', () => {
+  it('should validate array of complete PersonData', () => {
     const validArray = [
       {
         person: 'John Doe',
         word: 'Innovation',
         description: 'A creative thinker',
         picture: 'john.jpg'
+      }
+    ];
+
+    const result = PersonDataArraySchema.parse(validArray);
+    expect(result).toEqual(validArray);
+  });
+
+  it('should validate mixed array with optional fields', () => {
+    const validArray = [
+      {
+        person: 'John Doe',
+        word: 'Innovation',
+        description: 'A creative thinker',
+        picture: 'john.jpg'
+      },
+      {
+        person: 'Jane Smith',
+        word: 'Creativity'
+      },
+      {
+        person: 'Bob Wilson',
+        word: 'Leadership',
+        description: 'Natural leader with excellent communication skills.'
+      },
+      {
+        person: 'Alice Johnson',
+        word: 'Innovation',
+        picture: 'alice.jpg'
       }
     ];
 

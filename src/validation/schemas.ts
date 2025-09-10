@@ -4,8 +4,8 @@ import { z } from 'zod';
 export const PersonDataSchema = z.object({
   person: z.string().min(1, 'Person name is required'),
   word: z.string().min(1, 'Word is required'),
-  description: z.string().min(1, 'Description is required'),
-  picture: z.string().min(1, 'Picture filename is required'),
+  description: z.string().optional(),
+  picture: z.string().optional(),
 });
 
 // Schema for array of PersonData

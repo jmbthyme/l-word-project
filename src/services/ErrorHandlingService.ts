@@ -18,6 +18,33 @@ export class ErrorHandlingService implements ErrorHandler {
   }
 
   /**
+   * Handle data folder access errors
+   */
+  handleDataFolderError(error: Error): void {
+    this.logError(error, 'Data Folder Access');
+    
+    let userMessage = 'Failed to access the selected folder.';
+    if (error.message.includes('permission')) {
+      userMessage = 'Permission denied. Please ensure you have access to the selected folder.';
+    } else if (error.message.includes('not found')) {
+      userMessage = 'The selected folder could not be found.';
+    }
+    
+    this.showUserError('Folder Access Error', userMessage);
+  }
+
+  /**
+   * Handle image reference validation errors
+   */
+  handleImageReferenceError(filename: string, error: Error): void {
+    const enhancedError = new Error(`Image reference validation failed for "${filename}": ${error.message}`);
+    this.logError(enhancedError, 'Image Reference Validation');
+    
+    console.warn(`Image reference validation failed for ${filename}`);
+    // This is typically handled as a warning, not a blocking error
+  }
+
+  /**
    * Handle data validation errors with specific field information
    */
   handleDataValidationError(error: ValidationError): void {

@@ -25,15 +25,20 @@ export const PDFGenerationExample: React.FC = () => {
     },
     {
       person: 'Carol Davis',
-      word: 'Creativity',
-      description: 'Artistic vision combined with technical expertise',
-      picture: 'carol.jpg'
+      word: 'Creativity'
+      // No description or picture - demonstrating optional fields
     },
     {
       person: 'David Wilson',
       word: 'Innovation',
-      description: 'Forward-thinking approach to complex challenges',
-      picture: 'david.jpg'
+      description: 'Forward-thinking approach to complex challenges'
+      // No picture - demonstrating optional picture field
+    },
+    {
+      person: 'Eva Martinez',
+      word: 'Collaboration',
+      picture: 'eva.jpg'
+      // No description - demonstrating optional description field
     }
   ]);
 

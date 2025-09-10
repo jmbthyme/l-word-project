@@ -212,10 +212,12 @@ export class PDFService {
       if (!item.word || typeof item.word !== 'string') {
         throw new Error(`Invalid word at index ${index}`);
       }
-      if (!item.description || typeof item.description !== 'string') {
+      // Description is optional
+      if (item.description !== undefined && typeof item.description !== 'string') {
         throw new Error(`Invalid description at index ${index}`);
       }
-      if (!item.picture || typeof item.picture !== 'string') {
+      // Picture is optional
+      if (item.picture !== undefined && typeof item.picture !== 'string') {
         throw new Error(`Invalid picture filename at index ${index}`);
       }
     });
@@ -303,8 +305,11 @@ export class PDFService {
   private calculateOptimalItemsPerPage(data: PersonData[]): number {
     if (data.length === 0) return 2;
 
-    // Calculate average description length
-    const avgDescriptionLength = data.reduce((sum, item) => sum + item.description.length, 0) / data.length;
+    // Calculate average description length (only for items that have descriptions)
+    const itemsWithDescriptions = data.filter(item => item.description);
+    const avgDescriptionLength = itemsWithDescriptions.length > 0 
+      ? itemsWithDescriptions.reduce((sum, item) => sum + (item.description?.length || 0), 0) / itemsWithDescriptions.length
+      : 0;
     
     // Adjust items per page based on content complexity
     if (avgDescriptionLength > 500) {
@@ -312,7 +317,7 @@ export class PDFService {
     } else if (avgDescriptionLength > 200) {
       return 2; // Medium descriptions - two items per page
     } else {
-      return 3; // Short descriptions - three items per page
+      return 3; // Short descriptions or no descriptions - three items per page
     }
   }
 

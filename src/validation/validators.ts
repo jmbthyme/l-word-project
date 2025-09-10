@@ -81,9 +81,36 @@ export function validateImageFile(file: File): boolean {
 /**
  * Validates that required fields exist in PersonData
  * @param data - PersonData object to check
- * @returns Array of missing field names
+ * @returns Array of missing required field names (only person and word are required)
  */
 export function getMissingFields(data: Partial<PersonData>): string[] {
-  const requiredFields: (keyof PersonData)[] = ['person', 'word', 'description', 'picture'];
+  const requiredFields: (keyof PersonData)[] = ['person', 'word'];
   return requiredFields.filter(field => !data[field] || data[field]?.trim() === '');
+}
+
+/**
+ * Validates that picture references exist in available images
+ * @param data - Array of PersonData to validate
+ * @param availableImages - Array of available image filenames
+ * @returns Object with validation results and warnings
+ */
+export function validateImageReferences(data: PersonData[], availableImages: string[]): {
+  isValid: boolean;
+  warnings: string[];
+  errors: string[];
+} {
+  const warnings: string[] = [];
+  const errors: string[] = [];
+  
+  data.forEach((item, index) => {
+    if (item.picture && !availableImages.includes(item.picture)) {
+      warnings.push(`Entry ${index + 1} (${item.person}): Picture "${item.picture}" not found in data folder`);
+    }
+  });
+  
+  return {
+    isValid: errors.length === 0,
+    warnings,
+    errors
+  };
 }

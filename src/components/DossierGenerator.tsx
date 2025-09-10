@@ -42,10 +42,11 @@ export const DossierGenerator: React.FC<DossierGeneratorProps> = ({
 
   // Render a single person data item with improved layout and error handling
   const renderPersonItem = (person: PersonData, index: number, isLastOnPage: boolean) => {
-    const imageData = images.get(person.picture);
+    const imageData = person.picture ? images.get(person.picture) : undefined;
     
     // Handle missing or invalid image data gracefully
     const hasValidImage = imageData && imageData.startsWith('data:image/');
+    const hasDescription = person.description && person.description.trim().length > 0;
     
     return (
       <View key={`person-${index}`} style={[
@@ -60,7 +61,7 @@ export const DossierGenerator: React.FC<DossierGeneratorProps> = ({
           {/* Left Column - Text Content */}
           <View style={[
             styles.textColumn,
-            !hasValidImage && styles.textColumnFullWidth
+            (!person.picture || !hasValidImage) && styles.textColumnFullWidth
           ]}>
             {/* Word Section */}
             <View style={styles.wordSection}>
@@ -68,37 +69,41 @@ export const DossierGenerator: React.FC<DossierGeneratorProps> = ({
               <Text style={styles.wordText}>{person.word}</Text>
             </View>
             
-            {/* Description Section with improved text handling */}
-            <View style={styles.descriptionSection}>
-              <Text style={styles.sectionLabel}>Description:</Text>
-              <Text style={styles.descriptionText}>
-                {person.description.length > 500 
-                  ? `${person.description.substring(0, 500)}...` 
-                  : person.description
-                }
-              </Text>
-            </View>
-          </View>
-          
-          {/* Right Column - Image with fallback */}
-          {hasValidImage ? (
-            <View style={styles.imageColumn}>
-              <Image
-                src={imageData}
-                style={styles.personImage}
-              />
-            </View>
-          ) : (
-            <View style={styles.imageColumn}>
-              <View style={styles.imagePlaceholder}>
-                <Text style={styles.imagePlaceholderText}>
-                  {person.picture}
-                </Text>
-                <Text style={styles.imagePlaceholderSubtext}>
-                  Image not found
+            {/* Description Section with improved text handling - only if description exists */}
+            {hasDescription && (
+              <View style={styles.descriptionSection}>
+                <Text style={styles.sectionLabel}>Description:</Text>
+                <Text style={styles.descriptionText}>
+                  {person.description!.length > 500 
+                    ? `${person.description!.substring(0, 500)}...` 
+                    : person.description
+                  }
                 </Text>
               </View>
-            </View>
+            )}
+          </View>
+          
+          {/* Right Column - Image with fallback - only if picture field exists */}
+          {person.picture && (
+            hasValidImage ? (
+              <View style={styles.imageColumn}>
+                <Image
+                  src={imageData}
+                  style={styles.personImage}
+                />
+              </View>
+            ) : (
+              <View style={styles.imageColumn}>
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.imagePlaceholderText}>
+                    {person.picture}
+                  </Text>
+                  <Text style={styles.imagePlaceholderSubtext}>
+                    Image not found
+                  </Text>
+                </View>
+              </View>
+            )
           )}
         </View>
         

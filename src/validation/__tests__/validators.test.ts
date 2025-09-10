@@ -59,30 +59,42 @@ describe('validatePersonData', () => {
     expect(() => validatePersonData(invalidData)).toThrow('Word is required');
   });
 
-  it('should throw error for missing description field', () => {
-    const invalidData = [
+  it('should accept missing or empty description field', () => {
+    const validData = [
       {
         person: 'John Doe',
         word: 'Innovation',
-        description: '',
         picture: 'john.jpg'
+      },
+      {
+        person: 'Jane Smith',
+        word: 'Creativity',
+        description: '',
+        picture: 'jane.jpg'
       }
     ];
 
-    expect(() => validatePersonData(invalidData)).toThrow('Description is required');
+    const result = validatePersonData(validData);
+    expect(result).toEqual(validData);
   });
 
-  it('should throw error for missing picture field', () => {
-    const invalidData = [
+  it('should accept missing or empty picture field', () => {
+    const validData = [
       {
         person: 'John Doe',
         word: 'Innovation',
-        description: 'A creative thinker',
+        description: 'A creative thinker'
+      },
+      {
+        person: 'Jane Smith',
+        word: 'Leadership',
+        description: 'A natural leader',
         picture: ''
       }
     ];
 
-    expect(() => validatePersonData(invalidData)).toThrow('Picture filename is required');
+    const result = validatePersonData(validData);
+    expect(result).toEqual(validData);
   });
 
   it('should throw error for non-array input', () => {
@@ -211,20 +223,21 @@ describe('getMissingFields', () => {
     expect(getMissingFields(completeData)).toEqual([]);
   });
 
-  it('should return missing field names', () => {
+  it('should return missing required field names', () => {
     const incompleteData = {
       person: 'John Doe',
       word: '',
       description: 'A creative thinker'
-      // picture is missing
+      // picture is missing but optional
     };
 
     const missing = getMissingFields(incompleteData);
     expect(missing).toContain('word');
-    expect(missing).toContain('picture');
+    expect(missing).not.toContain('picture'); // picture is optional
+    expect(missing).not.toContain('description'); // description is optional
   });
 
-  it('should detect empty string fields', () => {
+  it('should detect empty string fields for required fields only', () => {
     const dataWithEmptyFields = {
       person: '   ',
       word: 'Innovation',
@@ -234,11 +247,11 @@ describe('getMissingFields', () => {
 
     const missing = getMissingFields(dataWithEmptyFields);
     expect(missing).toContain('person');
-    expect(missing).toContain('description');
+    expect(missing).not.toContain('description'); // description is optional
   });
 
-  it('should return all fields for empty object', () => {
+  it('should return only required fields for empty object', () => {
     const missing = getMissingFields({});
-    expect(missing).toEqual(['person', 'word', 'description', 'picture']);
+    expect(missing).toEqual(['person', 'word']);
   });
 });

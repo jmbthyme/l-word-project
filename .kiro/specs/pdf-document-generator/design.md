@@ -48,15 +48,15 @@ The PDF Document Generator is a React-based application that creates two distinc
 #### 2. DataLoader Component
 ```typescript
 interface DataLoaderProps {
-  onDataLoad: (data: PersonData[]) => void;
+  onDataLoad: (data: PersonData[], images: Map<string, string>) => void;
   onError: (error: string) => void;
 }
 
 interface PersonData {
   person: string;
   word: string;
-  description: string;
-  picture: string;
+  description?: string;
+  picture?: string;
 }
 ```
 
@@ -101,9 +101,16 @@ interface DossierGeneratorProps {
 #### DataService
 ```typescript
 class DataService {
+  loadDataFolder(folderHandle: FileSystemDirectoryHandle): Promise<{data: PersonData[], images: Map<string, string>}>;
   validateJsonData(data: any[]): PersonData[];
-  loadImages(imageFiles: FileList): Promise<Map<string, string>>;
+  validateImageReferences(data: PersonData[], availableImages: string[]): ValidationResult;
   processWordsForCloud(data: PersonData[]): WordCloudItem[];
+}
+
+interface ValidationResult {
+  isValid: boolean;
+  warnings: string[];
+  errors: string[];
 }
 
 interface WordCloudItem {
@@ -141,8 +148,8 @@ class FontService {
 interface PersonData {
   person: string;
   word: string;
-  description: string;
-  picture: string; // filename reference
+  description?: string; // optional field
+  picture?: string; // optional filename reference
 }
 
 // Word cloud processing
@@ -182,16 +189,23 @@ interface AppState {
 
 ### Validation Strategy
 
-1. **JSON Data Validation**
+1. **Data Folder Validation**
+   - Verify folder contains at least one JSON file
+   - Validate folder structure and file accessibility
+   - Check for supported image formats in the same folder
+
+2. **JSON Data Validation**
    - Schema validation using Zod or similar
-   - Required field checking
+   - Required field checking (person, word)
+   - Optional field validation (description, picture)
    - Data type validation
    - Graceful error reporting
 
-2. **Image Loading**
+3. **Image Reference Validation**
+   - Verify picture field references exist as files in the data folder
    - File format validation (PNG, JPG, JPEG)
    - File size limits
-   - Missing image handling
+   - Missing image handling with warnings
    - Base64 conversion error handling
 
 3. **PDF Generation**
@@ -204,7 +218,9 @@ interface AppState {
 
 ```typescript
 interface ErrorHandler {
+  handleDataFolderError(error: Error): void;
   handleDataValidationError(error: ValidationError): void;
+  handleImageReferenceError(filename: string, error: Error): void;
   handleImageLoadError(filename: string, error: Error): void;
   handlePDFGenerationError(type: 'wordcloud' | 'dossier', error: Error): void;
   handleFontLoadError(fontFamily: string, error: Error): void;
@@ -239,6 +255,17 @@ const mockPersonData: PersonData[] = [
     word: "Innovation",
     description: "A forward-thinking individual who brings creative solutions to complex problems.",
     picture: "john_doe.jpg"
+  },
+  {
+    person: "Jane Smith",
+    word: "Creativity"
+    // description and picture are optional
+  },
+  {
+    person: "Bob Wilson",
+    word: "Leadership",
+    description: "Natural leader with excellent communication skills."
+    // picture is optional
   },
   // Additional test cases...
 ];

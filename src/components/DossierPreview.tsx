@@ -28,7 +28,7 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
 
   // Track image loading for preview readiness
   useEffect(() => {
-    const totalImages = data.filter(person => images.has(person.picture)).length;
+    const totalImages = data.filter(person => person.picture && images.has(person.picture)).length;
     if (totalImages === 0) {
       setIsLoading(false);
       onPreviewReady?.();
@@ -57,7 +57,7 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
 
   // Render a single person item
   const renderPersonItem = (person: PersonData, index: number) => {
-    const imageData = images.get(person.picture);
+    const imageData = person.picture ? images.get(person.picture) : undefined;
     
     return (
       <div key={`person-${index}`} className="mb-6 pb-4 border-b border-gray-200 last:border-b-0">
@@ -76,33 +76,38 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
               </div>
             </div>
             
-            {/* Description Section */}
-            <div className="mb-3">
-              <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Description:</span>
-              <p className="mt-1 text-sm text-gray-700 leading-relaxed text-justify">
-                {person.description}
-              </p>
-            </div>
+            {/* Description Section - Only render if description exists */}
+            {person.description && (
+              <div className="mb-3">
+                <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Description:</span>
+                <p className="mt-1 text-sm text-gray-700 leading-relaxed text-justify">
+                  {person.description}
+                </p>
+              </div>
+            )}
           </div>
           
-          {/* Right Column - Image */}
-          {imageData && (
-            <div className="w-24 h-24 flex-shrink-0">
-              <img
-                src={imageData}
-                alt={`Picture of ${person.person}`}
-                className="w-full h-full object-cover rounded-lg border-2 border-gray-200"
-                onLoad={handleImageLoad}
-                onError={() => handleImageError(person.person)}
-              />
-            </div>
-          )}
-          {!imageData && person.picture && (
-            <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-lg border-2 border-gray-200 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
+          {/* Right Column - Image - Only render if picture field exists */}
+          {person.picture && (
+            <>
+              {imageData ? (
+                <div className="w-24 h-24 flex-shrink-0">
+                  <img
+                    src={imageData}
+                    alt={`Picture of ${person.person}`}
+                    className="w-full h-full object-cover rounded-lg border-2 border-gray-200"
+                    onLoad={handleImageLoad}
+                    onError={() => handleImageError(person.person)}
+                  />
+                </div>
+              ) : (
+                <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-lg border-2 border-gray-200 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

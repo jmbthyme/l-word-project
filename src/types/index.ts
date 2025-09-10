@@ -33,7 +33,9 @@ export interface PerformanceConfig {
 }
 
 export interface ErrorHandler {
+  handleDataFolderError(error: Error): void;
   handleDataValidationError(error: ValidationError): void;
+  handleImageReferenceError(filename: string, error: Error): void;
   handleImageLoadError(filename: string, error: Error): void;
   handlePDFGenerationError(type: 'wordcloud' | 'dossier', error: Error): void;
   handleFontLoadError(fontFamily: string, error: Error): void;

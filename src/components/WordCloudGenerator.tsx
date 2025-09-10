@@ -6,6 +6,8 @@ export interface WordCloudGeneratorProps {
   config: WordCloudConfig;
   fonts: GoogleFont[];
   onWordsGenerated?: (words: WordCloudItem[]) => void;
+  isGenerating?: boolean;
+  onPreviewReady?: () => void;
 }
 
 export interface WordCloudLayoutResult {
@@ -23,15 +25,25 @@ export interface WordCloudLayoutResult {
 /**
  * WordCloudGenerator component that creates a word cloud layout from PersonData
  * Implements collision detection and positioning logic for optimal word placement
+ * Enhanced with configuration reactivity and visual feedback
  */
 export const WordCloudGenerator: React.FC<WordCloudGeneratorProps> = ({
   data,
   config,
   fonts,
-  onWordsGenerated
+  onWordsGenerated,
+  isGenerating = false,
+  onPreviewReady
 }) => {
   // Calculate word frequencies and generate word cloud items
   const wordCloudItems = useMemo(() => {
+    if (data.length === 0 || fonts.length === 0) {
+      return {
+        words: [],
+        bounds: { width: 0, height: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 }
+      };
+    }
+
     const wordFrequency = calculateWordFrequency(data);
     const items = generateWordCloudItems(wordFrequency, fonts);
     const layoutResult = generateWordCloudLayout(items, config);
@@ -40,16 +52,81 @@ export const WordCloudGenerator: React.FC<WordCloudGeneratorProps> = ({
       onWordsGenerated(layoutResult.words);
     }
 
+    // Notify when preview is ready
+    setTimeout(() => {
+      onPreviewReady?.();
+    }, 100);
+
     return layoutResult;
-  }, [data, config, fonts, onWordsGenerated]);
+  }, [data, config, fonts, onWordsGenerated, onPreviewReady]);
+
+  if (data.length === 0) {
+    return (
+      <div className="word-cloud-container relative w-full h-full overflow-hidden flex items-center justify-center bg-gray-50 rounded-lg">
+        <div className="text-center text-gray-500">
+          <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a1.994 1.994 0 01-1.414.586H7a4 4 0 01-4-4V7a4 4 0 014-4z" />
+            </svg>
+          </div>
+          <p>No words to display</p>
+          <p className="text-sm mt-1">Load data to see word cloud preview</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (fonts.length === 0) {
+    return (
+      <div className="word-cloud-container relative w-full h-full overflow-hidden flex items-center justify-center bg-gray-50 rounded-lg">
+        <div className="text-center text-gray-500">
+          <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="animate-spin h-8 w-8 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <p>Loading fonts...</p>
+          <p className="text-sm mt-1">Preparing word cloud preview</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="word-cloud-container relative w-full h-full overflow-hidden">
+      {/* Configuration indicator */}
+      <div className="absolute top-2 right-2 z-10 text-xs bg-white bg-opacity-90 rounded px-2 py-1 text-gray-600">
+        {config.paperSize} {config.orientation}
+        {config.paperSize === 'A4' && config.orientation === 'landscape' && ' (11.7" × 8.3")'}
+        {config.paperSize === 'A4' && config.orientation === 'portrait' && ' (8.3" × 11.7")'}
+        {config.paperSize === 'A3' && config.orientation === 'landscape' && ' (16.5" × 11.7")'}
+        {config.paperSize === 'A3' && config.orientation === 'portrait' && ' (11.7" × 16.5")'}
+      </div>
+
+      {/* Generation feedback overlay */}
+      {isGenerating && (
+        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-20">
+          <div className="text-center">
+            <svg className="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-sm text-blue-600 font-medium">Generating PDF...</p>
+          </div>
+        </div>
+      )}
+
       <svg
         width="100%"
         height="100%"
         viewBox={`${wordCloudItems.bounds.minX} ${wordCloudItems.bounds.minY} ${wordCloudItems.bounds.width} ${wordCloudItems.bounds.height}`}
-        className="word-cloud-svg"
+        className={`word-cloud-svg ${isGenerating ? 'opacity-50' : ''}`}
+        style={{
+          aspectRatio: config.orientation === 'landscape'
+            ? config.paperSize === 'A4' ? '11.7/8.3' : '16.5/11.7'
+            : config.paperSize === 'A4' ? '8.3/11.7' : '11.7/16.5'
+        }}
       >
         {wordCloudItems.words.map((word, index) => (
           <text
@@ -62,12 +139,17 @@ export const WordCloudGenerator: React.FC<WordCloudGeneratorProps> = ({
             fill={word.color || '#333'}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="word-cloud-text select-none"
+            className="word-cloud-text select-none transition-opacity duration-200"
           >
             {word.text}
           </text>
         ))}
       </svg>
+
+      {/* Word count indicator */}
+      <div className="absolute bottom-2 left-2 text-xs bg-white bg-opacity-90 rounded px-2 py-1 text-gray-600">
+        {wordCloudItems.words.length} words • {new Set(data.map(item => item.word.toLowerCase())).size} unique
+      </div>
     </div>
   );
 };

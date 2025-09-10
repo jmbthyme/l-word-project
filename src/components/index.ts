@@ -4,6 +4,7 @@ export type { DocumentControlsProps } from './DocumentControls';
 export { DossierPreview } from './DossierPreview';
 export { WordCloudGenerator } from './WordCloudGenerator';
 export type { WordCloudGeneratorProps, WordCloudLayoutResult } from './WordCloudGenerator';
+export { PreviewPanel } from './PreviewPanel';
 export { PerformanceMonitor } from './PerformanceMonitor';
 export { ErrorBoundary, useErrorHandler } from './ErrorBoundary';
 export { ToastContainer, useToast } from './Toast';

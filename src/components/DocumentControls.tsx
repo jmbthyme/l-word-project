@@ -7,6 +7,7 @@ export interface DocumentControlsProps {
   onGenerateDossier: () => void;
   isGenerating?: boolean;
   disabled?: boolean;
+  onConfigChange?: (config: WordCloudConfig) => void;
 }
 
 /**
@@ -18,7 +19,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
   onGenerateWordCloud,
   onGenerateDossier,
   isGenerating = false,
-  disabled = false
+  disabled = false,
+  onConfigChange
 }) => {
   const [wordCloudConfig, setWordCloudConfig] = useState<WordCloudConfig>({
     paperSize: 'A4',
@@ -26,11 +28,15 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
   });
 
   const handlePaperSizeChange = (paperSize: 'A4' | 'A3') => {
-    setWordCloudConfig(prev => ({ ...prev, paperSize }));
+    const newConfig = { ...wordCloudConfig, paperSize };
+    setWordCloudConfig(newConfig);
+    onConfigChange?.(newConfig);
   };
 
   const handleOrientationChange = (orientation: 'portrait' | 'landscape') => {
-    setWordCloudConfig(prev => ({ ...prev, orientation }));
+    const newConfig = { ...wordCloudConfig, orientation };
+    setWordCloudConfig(newConfig);
+    onConfigChange?.(newConfig);
   };
 
   const handleGenerateWordCloud = () => {

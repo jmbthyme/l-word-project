@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { DataLoader } from './components/DataLoader';
 import { DocumentControls } from './components/DocumentControls';
-import { DossierPreview } from './components/DossierPreview';
-import { WordCloudGenerator } from './components/WordCloudGenerator';
+import { PreviewPanel } from './components/PreviewPanel';
 import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastContainer, useToast } from './components/Toast';
@@ -26,6 +25,10 @@ function App() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [currentView, setCurrentView] = useState<'none' | 'wordcloud' | 'dossier'>('none');
   const [wordCloudItems, setWordCloudItems] = useState<WordCloudItem[]>([]);
+  const [wordCloudConfig, setWordCloudConfig] = useState<WordCloudConfig>({
+    paperSize: 'A4',
+    orientation: 'landscape'
+  });
 
   // Services
   const [pdfService] = useState(() => new PDFService());
@@ -90,8 +93,14 @@ function App() {
     });
   }, [addToast]);
 
+  // Handle word cloud configuration changes
+  const handleWordCloudConfigChange = useCallback((config: WordCloudConfig) => {
+    setWordCloudConfig(config);
+  }, []);
+
   // Generate Word Cloud PDF with performance monitoring and error handling
   const handleGenerateWordCloud = useCallback(async (config: WordCloudConfig) => {
+    setWordCloudConfig(config);
     if (appState.data.length === 0) return;
 
     setIsGeneratingPDF(true);
@@ -294,6 +303,7 @@ function App() {
               onGenerateDossier={handleGenerateDossier}
               isGenerating={isGeneratingPDF}
               disabled={appState.isLoading}
+              onConfigChange={handleWordCloudConfigChange}
             />
 
             {/* Loading State */}
@@ -321,63 +331,17 @@ function App() {
 
           {/* Right Column - Preview */}
           <div className="space-y-6">
-            {currentView === 'none' && appState.data.length === 0 && (
-              <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Loaded</h3>
-                <p className="text-gray-600">
-                  Load your JSON data and images to get started with document generation.
-                </p>
-              </div>
-            )}
-
-            {currentView === 'none' && appState.data.length > 0 && (
-              <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Data Ready</h3>
-                <p className="text-gray-600 mb-4">
-                  {appState.data.length} items loaded. Choose a document type to generate.
-                </p>
-                <div className="text-sm text-gray-500">
-                  <p>• Word Cloud: Visual representation of words</p>
-                  <p>• Dossier: Comprehensive document with all data</p>
-                </div>
-              </div>
-            )}
-
-            {currentView === 'wordcloud' && wordCloudItems.length > 0 && (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Word Cloud Preview</h3>
-                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 min-h-64 flex items-center justify-center">
-                  <WordCloudGenerator
-                    data={appState.data}
-                    config={{ paperSize: 'A4', orientation: 'landscape' }}
-                    fonts={appState.fonts}
-                    onWordsGenerated={setWordCloudItems}
-                  />
-                </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  Preview of {wordCloudItems.length} words with varied fonts and sizes
-                </p>
-              </div>
-            )}
-
-            {currentView === 'dossier' && appState.data.length > 0 && (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <DossierPreview
-                  data={appState.data}
-                  images={appState.images}
-                />
-              </div>
-            )}
+            <PreviewPanel
+              data={appState.data}
+              images={appState.images}
+              currentView={currentView}
+              wordCloudConfig={wordCloudConfig}
+              fonts={appState.fonts}
+              wordCloudItems={wordCloudItems}
+              isGenerating={isGeneratingPDF}
+              onWordsGenerated={setWordCloudItems}
+              onConfigChange={handleWordCloudConfigChange}
+            />
           </div>
         </div>
 

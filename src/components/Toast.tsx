@@ -36,12 +36,12 @@ const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
   if (!isVisible) return null;
 
   const getToastStyles = () => {
-    const baseStyles = "max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out";
-    
+    const baseStyles = "max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out";
+
     if (isExiting) {
       return `${baseStyles} translate-x-full opacity-0`;
     }
-    
+
     return `${baseStyles} translate-x-0 opacity-100`;
   };
 
@@ -104,11 +104,11 @@ const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
           <div className="flex-shrink-0">
             {icon}
           </div>
-          <div className="ml-3 w-0 flex-1">
-            <p className={`text-sm font-medium ${titleColor}`}>
+          <div className="ml-3 flex-1 min-w-0">
+            <p className={`text-sm font-medium ${titleColor} break-words`}>
               {message.title}
             </p>
-            <p className={`mt-1 text-sm ${messageColor}`}>
+            <p className={`mt-1 text-sm ${messageColor} break-words`}>
               {message.message}
             </p>
           </div>
@@ -152,9 +152,9 @@ export const useToast = () => {
   const addToast = (toast: Omit<ToastMessage, 'id'>) => {
     const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     const newToast: ToastMessage = { ...toast, id };
-    
+
     setMessages(prev => [...prev, newToast]);
-    
+
     return id;
   };
 
@@ -179,7 +179,7 @@ export const useToast = () => {
     };
 
     window.addEventListener('app-error', handleAppError as EventListener);
-    
+
     return () => {
       window.removeEventListener('app-error', handleAppError as EventListener);
     };

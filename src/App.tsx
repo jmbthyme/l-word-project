@@ -1,13 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DataLoader } from './components/DataLoader';
 import { DocumentControls } from './components/DocumentControls';
 import { DossierPreview } from './components/DossierPreview';
 import { WordCloudGenerator } from './components/WordCloudGenerator';
 import { PerformanceMonitor } from './components/PerformanceMonitor';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { ToastContainer, useToast } from './components/Toast';
 import { PDFService } from './services/PDFService';
 import { FontService } from './services/FontService';
 import { PerformanceService } from './services/PerformanceService';
-import type { PersonData, WordCloudConfig, AppState, WordCloudItem } from './types';
+import { ErrorHandlingService, setupGlobalErrorHandling } from './services/ErrorHandlingService';
+import type { PersonData, WordCloudConfig, AppState, WordCloudItem, ValidationError } from './types';
 
 function App() {
   // Application state
@@ -28,9 +31,18 @@ function App() {
   const [pdfService] = useState(() => new PDFService());
   const [fontService] = useState(() => new FontService());
   const [performanceService] = useState(() => PerformanceService.getInstance());
+  const [errorService] = useState(() => ErrorHandlingService.getInstance());
 
   // Performance monitoring state
   const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false);
+
+  // Toast notifications
+  const { messages: toastMessages, addToast, removeToast } = useToast();
+
+  // Setup global error handling
+  useEffect(() => {
+    setupGlobalErrorHandling();
+  }, []);
 
   // Handle data loading from DataLoader component
   const handleDataLoad = useCallback((data: PersonData[], images: Map<string, string>) => {
@@ -52,9 +64,33 @@ function App() {
       images: new Map()
     }));
     setCurrentView('none');
-  }, []);
+    
+    // Show toast notification for data errors
+    addToast({
+      title: 'Data Loading Error',
+      message: error,
+      type: 'error',
+      duration: 7000
+    });
+  }, [addToast]);
 
-  // Generate Word Cloud PDF with performance monitoring
+  // Handle validation errors from DataLoader component
+  const handleValidationErrors = useCallback((errors: ValidationError[]) => {
+    // Show detailed validation errors in toast
+    const errorCount = errors.length;
+    const summary = errorCount === 1 
+      ? `Validation error in ${errors[0].field}: ${errors[0].message}`
+      : `Found ${errorCount} validation errors. Please check your data format.`;
+    
+    addToast({
+      title: 'Data Validation Failed',
+      message: summary,
+      type: 'error',
+      duration: 10000
+    });
+  }, [addToast]);
+
+  // Generate Word Cloud PDF with performance monitoring and error handling
   const handleGenerateWordCloud = useCallback(async (config: WordCloudConfig) => {
     if (appState.data.length === 0) return;
 
@@ -70,9 +106,25 @@ function App() {
       // Extract words from data
       const words = appState.data.map(item => item.word);
       
-      // Preload fonts for word cloud with performance optimization
-      const fonts = await fontService.preloadFontsForWordCloud(words.length);
+      // Preload fonts for word cloud with retry mechanism
+      const fonts = await errorService.withRetry(
+        () => fontService.preloadFontsForWordCloud(words.length),
+        2,
+        1000,
+        'Font Preloading for Word Cloud'
+      );
+      
       setAppState(prev => ({ ...prev, fonts }));
+
+      // Show success toast for font loading
+      if (fonts.length > 0) {
+        addToast({
+          title: 'Fonts Loaded',
+          message: `Successfully loaded ${fonts.length} fonts for word cloud`,
+          type: 'success',
+          duration: 3000
+        });
+      }
 
       // Generate word cloud layout (this will be handled by WordCloudGenerator)
       // For now, we'll create a simple layout
@@ -80,7 +132,7 @@ function App() {
         text: word,
         size: Math.max(12, 48 - (index * 2)), // Decreasing size
         weight: 400 + (Math.random() * 500), // Random weight between 400-900
-        fontFamily: fonts[index % fonts.length]?.family || 'Roboto',
+        fontFamily: fonts[index % fonts.length]?.family || 'Arial',
         color: `hsl(${Math.random() * 360}, 70%, 50%)`, // Random color
         x: Math.random() * 400 + 100, // Random position
         y: Math.random() * 300 + 100
@@ -89,26 +141,45 @@ function App() {
       setWordCloudItems(wordCloudItems);
       setCurrentView('wordcloud');
 
-      // Generate PDF with performance optimizations
-      const pdfBlob = await pdfService.generateWordCloudPDF(wordCloudItems, config);
+      // Generate PDF with retry mechanism
+      const pdfBlob = await errorService.withRetry(
+        () => pdfService.generateWordCloudPDF(wordCloudItems, config),
+        2,
+        2000,
+        'Word Cloud PDF Generation'
+      );
       
       // Download PDF
       const filename = `word-cloud-${config.paperSize}-${config.orientation}-${new Date().toISOString().split('T')[0]}`;
       pdfService.downloadPDF(pdfBlob, filename);
 
+      // Show success toast
+      addToast({
+        title: 'Word Cloud Generated',
+        message: `Successfully generated ${config.paperSize} ${config.orientation} Word Cloud PDF`,
+        type: 'success',
+        duration: 5000
+      });
+
     } catch (error) {
       console.error('Word Cloud generation failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
       setAppState(prev => ({
         ...prev,
-        error: `Word Cloud generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        error: `Word Cloud generation failed: ${errorMessage}`
       }));
+      
+      // Handle error through error service
+      errorService.handlePDFGenerationError('wordcloud', error instanceof Error ? error : new Error(String(error)));
+      
     } finally {
       timer.stop();
       setIsGeneratingPDF(false);
     }
-  }, [appState.data, fontService, pdfService, performanceService]);
+  }, [appState.data, fontService, pdfService, performanceService, errorService, addToast]);
 
-  // Generate Dossier PDF with performance monitoring
+  // Generate Dossier PDF with performance monitoring and error handling
   const handleGenerateDossier = useCallback(async () => {
     if (appState.data.length === 0) return;
 
@@ -122,24 +193,43 @@ function App() {
       // Monitor memory before starting
       performanceService.monitorMemoryUsage();
 
-      // Generate PDF with performance optimizations
-      const pdfBlob = await pdfService.generateDossierPDF(appState.data, appState.images);
+      // Generate PDF with retry mechanism
+      const pdfBlob = await errorService.withRetry(
+        () => pdfService.generateDossierPDF(appState.data, appState.images),
+        2,
+        2000,
+        'Dossier PDF Generation'
+      );
       
       // Download PDF
       const filename = `dossier-${new Date().toISOString().split('T')[0]}`;
       pdfService.downloadPDF(pdfBlob, filename);
 
+      // Show success toast
+      addToast({
+        title: 'Dossier Generated',
+        message: `Successfully generated dossier PDF with ${appState.data.length} entries`,
+        type: 'success',
+        duration: 5000
+      });
+
     } catch (error) {
       console.error('Dossier generation failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
       setAppState(prev => ({
         ...prev,
-        error: `Dossier generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        error: `Dossier generation failed: ${errorMessage}`
       }));
+      
+      // Handle error through error service
+      errorService.handlePDFGenerationError('dossier', error instanceof Error ? error : new Error(String(error)));
+      
     } finally {
       timer.stop();
       setIsGeneratingPDF(false);
     }
-  }, [appState.data, appState.images, pdfService, performanceService]);
+  }, [appState.data, appState.images, pdfService, performanceService, errorService, addToast]);
 
   // Clear error message
   const clearError = useCallback(() => {
@@ -194,6 +284,7 @@ function App() {
             <DataLoader
               onDataLoad={handleDataLoad}
               onError={handleDataError}
+              onValidationErrors={handleValidationErrors}
             />
 
             {/* Document Controls */}
@@ -301,8 +392,28 @@ function App() {
         isVisible={showPerformanceMonitor}
         onToggle={setShowPerformanceMonitor}
       />
+
+      {/* Toast Notifications */}
+      <ToastContainer
+        messages={toastMessages}
+        onClose={removeToast}
+      />
     </div>
   );
 }
 
-export default App;
+// Wrap App with ErrorBoundary
+function AppWithErrorBoundary() {
+  return (
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('Application Error Boundary caught error:', error, errorInfo);
+        // Could send to error reporting service here
+      }}
+    >
+      <App />
+    </ErrorBoundary>
+  );
+}
+
+export default AppWithErrorBoundary;

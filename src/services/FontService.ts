@@ -1,5 +1,6 @@
 import type { GoogleFont } from '../types';
 import { PerformanceService } from './PerformanceService';
+import { ErrorHandlingService } from './ErrorHandlingService';
 
 /**
  * FontService handles Google Fonts integration, loading, caching, and selection
@@ -8,9 +9,11 @@ import { PerformanceService } from './PerformanceService';
 export class FontService {
   private fontCache: Map<string, GoogleFont> = new Map();
   private loadedFonts: Set<string> = new Set();
+  private failedFonts: Set<string> = new Set();
   private readonly GOOGLE_FONTS_API_KEY = import.meta.env.VITE_GOOGLE_FONTS_API_KEY;
   private readonly GOOGLE_FONTS_BASE_URL = 'https://fonts.googleapis.com/css2';
   private performanceService = PerformanceService.getInstance();
+  private errorService = ErrorHandlingService.getInstance();
 
   // Curated list of fonts suitable for word clouds
   private readonly WORD_CLOUD_FONTS: GoogleFont[] = [
@@ -32,7 +35,7 @@ export class FontService {
   ];
 
   /**
-   * Load Google Fonts by family names with performance optimizations
+   * Load Google Fonts by family names with performance optimizations and retry mechanism
    * @param families Array of font family names to load
    * @returns Promise that resolves when fonts are loaded
    */
@@ -40,7 +43,9 @@ export class FontService {
     const timer = this.performanceService.createTimer('Font Loading');
     
     try {
-      const fontsToLoad = families.filter(family => !this.loadedFonts.has(family));
+      const fontsToLoad = families.filter(family => 
+        !this.loadedFonts.has(family) && !this.failedFonts.has(family)
+      );
 
       if (fontsToLoad.length === 0) {
         return;
@@ -54,19 +59,26 @@ export class FontService {
         console.warn(`Font loading limited to ${limitedFonts.length} fonts for performance`);
       }
 
-      // Load fonts with timeout and error handling
+      // Load fonts with retry mechanism
       const fontPromises = limitedFonts.map(family => 
-        this.loadSingleFontWithTimeout(family, 3000) // 3 second timeout per font
+        this.errorService.withRetry(
+          () => this.loadSingleFontWithTimeout(family, 3000),
+          2, // Max 2 retries
+          1000, // 1 second delay
+          `Font Loading: ${family}`
+        ).catch(error => {
+          this.failedFonts.add(family);
+          this.errorService.handleFontLoadError(family, error);
+          return null; // Don't fail the entire operation
+        })
       );
       
       const results = await Promise.allSettled(fontPromises);
       
       // Mark successfully loaded fonts
       results.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
+        if (result.status === 'fulfilled' && result.value !== null) {
           this.loadedFonts.add(limitedFonts[index]);
-        } else {
-          console.warn(`Failed to load font ${limitedFonts[index]}:`, result.reason);
         }
       });
 
@@ -194,7 +206,7 @@ export class FontService {
   }
 
   /**
-   * Preload fonts specifically for word cloud generation
+   * Preload fonts specifically for word cloud generation with fallback handling
    * @param wordCount Number of words in the word cloud
    * @returns Promise resolving to array of loaded GoogleFont objects
    */
@@ -211,11 +223,34 @@ export class FontService {
 
     try {
       await this.loadGoogleFonts(fontFamilies);
-      return selectedFonts;
+      
+      // Filter out fonts that failed to load and return available ones
+      const availableFonts = selectedFonts.filter(font => 
+        this.loadedFonts.has(font.family)
+      );
+      
+      // If we have at least one font, return what we have
+      if (availableFonts.length > 0) {
+        return availableFonts;
+      }
+      
+      // If no fonts loaded, try fallback fonts
+      const fallbackFonts = this.getFallbackFonts();
+      const fallbackFamilies = fallbackFonts.map(font => font.family);
+      
+      await this.loadGoogleFonts(fallbackFamilies);
+      
+      // Return whatever fallback fonts we could load
+      return fallbackFonts.filter(font => 
+        this.loadedFonts.has(font.family)
+      );
+      
     } catch (error) {
       console.error('Failed to preload fonts for word cloud:', error);
-      // Return a fallback set of basic fonts
-      return this.getFallbackFonts();
+      this.errorService.handleFontLoadError('word-cloud-fonts', error as Error);
+      
+      // Return system fonts as last resort
+      return this.getSystemFallbackFonts();
     }
   }
 
@@ -228,6 +263,19 @@ export class FontService {
       { family: 'Roboto', weights: [300, 400, 700] },
       { family: 'Open Sans', weights: [400, 600, 700] },
       { family: 'Lato', weights: [400, 700] }
+    ];
+  }
+
+  /**
+   * Get system fonts as absolute fallback when Google Fonts fail
+   * @returns Array of system font objects
+   */
+  private getSystemFallbackFonts(): GoogleFont[] {
+    return [
+      { family: 'Arial', weights: [400, 700] },
+      { family: 'Helvetica', weights: [400, 700] },
+      { family: 'Times New Roman', weights: [400, 700] },
+      { family: 'Georgia', weights: [400, 700] }
     ];
   }
 
@@ -264,6 +312,18 @@ export class FontService {
   clearCache(): void {
     this.fontCache.clear();
     this.loadedFonts.clear();
+    this.failedFonts.clear();
+  }
+
+  /**
+   * Get font loading statistics
+   */
+  getFontStats(): { loaded: number; failed: number; cached: number } {
+    return {
+      loaded: this.loadedFonts.size,
+      failed: this.failedFonts.size,
+      cached: this.fontCache.size
+    };
   }
 
   /**

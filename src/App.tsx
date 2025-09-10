@@ -338,10 +338,8 @@ function App() {
               currentView={currentView}
               wordCloudConfig={wordCloudConfig}
               fonts={appState.fonts}
-              wordCloudItems={wordCloudItems}
               isGenerating={isGeneratingPDF}
               onWordsGenerated={setWordCloudItems}
-              onConfigChange={handleWordCloudConfigChange}
             />
           </div>
         </div>

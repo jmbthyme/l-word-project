@@ -9,10 +9,8 @@ interface PreviewPanelProps {
   currentView: 'none' | 'wordcloud' | 'dossier';
   wordCloudConfig: WordCloudConfig;
   fonts: GoogleFont[];
-  wordCloudItems: WordCloudItem[];
   isGenerating: boolean;
   onWordsGenerated?: (words: WordCloudItem[]) => void;
-  onConfigChange?: (config: WordCloudConfig) => void;
 }
 
 /**
@@ -25,10 +23,8 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   currentView,
   wordCloudConfig,
   fonts,
-  wordCloudItems,
   isGenerating,
-  onWordsGenerated,
-  onConfigChange
+  onWordsGenerated
 }) => {
   const [previewReady, setPreviewReady] = useState(false);
   const [lastConfigChange, setLastConfigChange] = useState<number>(0);
@@ -103,7 +99,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
               Interactive preview with {data.length} words
             </p>
           </div>
-          
+
           {/* Configuration change indicator */}
           {!previewReady && Date.now() - lastConfigChange < 2000 && (
             <div className="flex items-center text-sm text-blue-600">
@@ -115,7 +111,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
             </div>
           )}
         </div>
-        
+
         <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 min-h-64 relative">
           <WordCloudGenerator
             data={data}
@@ -126,16 +122,16 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
             onPreviewReady={handlePreviewReady}
           />
         </div>
-        
+
         {/* Preview accuracy info */}
         <div className="mt-3 text-xs text-gray-500 bg-gray-50 rounded px-3 py-2">
           <div className="flex items-center justify-between">
             <span>
               📄 Print-accurate preview • Actual size: {
                 wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'landscape' ? '11.7" × 8.3"' :
-                wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'portrait' ? '8.3" × 11.7"' :
-                wordCloudConfig.paperSize === 'A3' && wordCloudConfig.orientation === 'landscape' ? '16.5" × 11.7"' :
-                '11.7" × 16.5"'
+                  wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'portrait' ? '8.3" × 11.7"' :
+                    wordCloudConfig.paperSize === 'A3' && wordCloudConfig.orientation === 'landscape' ? '16.5" × 11.7"' :
+                      '11.7" × 16.5"'
               }
             </span>
             {previewReady && (

@@ -31,7 +31,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError, onV
     setIsLoading(true);
     setValidationWarnings([]);
     const timer = performanceService.createTimer('Folder Loading');
-    
+
     try {
       // Show directory picker
       const folderHandle = await (window as any).showDirectoryPicker({
@@ -55,9 +55,16 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError, onV
       // Trigger callback with loaded data
       onDataLoad(result.data, result.images);
 
-      // Show success message with warnings if any
-      if (result.validation.warnings.length > 0) {
-        onError(`Loaded ${result.data.length} entries and ${result.images.size} images. ${result.validation.warnings.length} image references could not be resolved.`);
+      // Handle validation warnings if any
+      if (result.validation.warnings.length > 0 && onValidationErrors) {
+        // Convert warnings to ValidationError format
+        const validationErrors: ValidationError[] = result.validation.warnings.map((warning, index) => ({
+          field: 'picture',
+          message: warning,
+          value: '',
+          row: index + 1
+        }));
+        onValidationErrors(validationErrors);
       }
 
     } catch (error) {
@@ -66,7 +73,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError, onV
           // User cancelled the folder selection
           return;
         }
-        
+
         if (error.message.includes('JSON')) {
           onError(`JSON parsing error: ${errorService.sanitizeErrorMessage(error)}`);
         } else if (error.message.includes('No JSON files')) {
@@ -92,6 +99,9 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError, onV
     setLoadedImages(new Map());
     setValidationWarnings([]);
     setFolderName('');
+
+    // Notify parent component that data has been cleared
+    onDataLoad([], new Map());
   };
 
   return (
@@ -107,7 +117,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError, onV
           <p className="text-sm text-gray-600 mb-3">
             Choose a folder containing JSON data files and images (PNG, JPG, JPEG).
           </p>
-          
+
           {isFileSystemAccessSupported ? (
             <button
               onClick={handleFolderSelect}

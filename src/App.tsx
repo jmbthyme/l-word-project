@@ -144,7 +144,8 @@ function App() {
         fontFamily: fonts[index % fonts.length]?.family || 'Arial',
         color: `hsl(${Math.random() * 360}, 70%, 50%)`, // Random color
         x: Math.random() * 400 + 100, // Random position
-        y: Math.random() * 300 + 100
+        y: Math.random() * 300 + 100,
+        rotation: Math.random() < 0.5 ? 0 : 90 // 50% chance of horizontal (0°) or vertical (90°)
       }));
 
       setWordCloudItems(wordCloudItems);

@@ -15,23 +15,14 @@ export class FontService {
   private performanceService = PerformanceService.getInstance();
   private errorService = ErrorHandlingService.getInstance();
 
-  // Curated list of fonts suitable for word clouds
+  // Curated list of PDF-safe fonts suitable for word clouds
   private readonly WORD_CLOUD_FONTS: GoogleFont[] = [
-    { family: 'Roboto', weights: [300, 400, 500, 700, 900] },
-    { family: 'Open Sans', weights: [300, 400, 600, 700, 800] },
-    { family: 'Lato', weights: [300, 400, 700, 900] },
-    { family: 'Montserrat', weights: [300, 400, 500, 600, 700, 800, 900] },
-    { family: 'Poppins', weights: [300, 400, 500, 600, 700, 800, 900] },
-    { family: 'Source Sans Pro', weights: [300, 400, 600, 700, 900] },
-    { family: 'Oswald', weights: [300, 400, 500, 600, 700] },
-    { family: 'Raleway', weights: [300, 400, 500, 600, 700, 800, 900] },
-    { family: 'Nunito', weights: [300, 400, 600, 700, 800, 900] },
-    { family: 'Playfair Display', weights: [400, 500, 600, 700, 800, 900] },
-    { family: 'Merriweather', weights: [300, 400, 700, 900] },
-    { family: 'PT Sans', weights: [400, 700] },
-    { family: 'Ubuntu', weights: [300, 400, 500, 700] },
-    { family: 'Crimson Text', weights: [400, 600, 700] },
-    { family: 'Libre Baskerville', weights: [400, 700] }
+    { family: 'Helvetica', weights: [300, 400, 500, 700, 900] },
+    { family: 'Helvetica-Bold', weights: [400, 700] },
+    { family: 'Times-Roman', weights: [400, 700] },
+    { family: 'Times-Bold', weights: [400, 700] },
+    { family: 'Courier', weights: [400, 700] },
+    { family: 'Courier-Bold', weights: [400, 700] }
   ];
 
   /**
@@ -260,9 +251,9 @@ export class FontService {
    */
   private getFallbackFonts(): GoogleFont[] {
     return [
-      { family: 'Roboto', weights: [300, 400, 700] },
-      { family: 'Open Sans', weights: [400, 600, 700] },
-      { family: 'Lato', weights: [400, 700] }
+      { family: 'Helvetica', weights: [300, 400, 700] },
+      { family: 'Times-Roman', weights: [400, 700] },
+      { family: 'Courier', weights: [400, 700] }
     ];
   }
 
@@ -272,10 +263,9 @@ export class FontService {
    */
   private getSystemFallbackFonts(): GoogleFont[] {
     return [
-      { family: 'Arial', weights: [400, 700] },
       { family: 'Helvetica', weights: [400, 700] },
-      { family: 'Times New Roman', weights: [400, 700] },
-      { family: 'Georgia', weights: [400, 700] }
+      { family: 'Times-Roman', weights: [400, 700] },
+      { family: 'Courier', weights: [400, 700] }
     ];
   }
 

@@ -139,6 +139,7 @@ export const WordCloudGenerator: React.FC<WordCloudGeneratorProps> = ({
             fill={word.color || '#333'}
             textAnchor="middle"
             dominantBaseline="middle"
+            transform={word.rotation ? `rotate(${word.rotation} ${word.x} ${word.y})` : undefined}
             className="word-cloud-text select-none transition-opacity duration-200"
           >
             {word.text}
@@ -217,7 +218,8 @@ export function generateWordCloudItems(
       fontFamily: randomFont.family,
       color: randomColor,
       x: 0, // Will be set by layout algorithm
-      y: 0  // Will be set by layout algorithm
+      y: 0, // Will be set by layout algorithm
+      rotation: Math.random() < 0.5 ? 0 : 90 // 50% chance of horizontal (0°) or vertical (90°)
     };
   });
 }
@@ -427,8 +429,13 @@ function getTextBounds(word: WordCloudItem): { width: number; height: number } {
   const baseCharWidth = word.size * 0.6; // Rough approximation
   const weightMultiplier = word.weight >= 700 ? 1.2 : word.weight >= 500 ? 1.1 : 1.0;
 
-  const width = word.text.length * baseCharWidth * weightMultiplier;
-  const height = word.size * 1.2; // Line height approximation
+  let width = word.text.length * baseCharWidth * weightMultiplier;
+  let height = word.size * 1.2; // Line height approximation
+
+  // If rotated 90 degrees, swap width and height
+  if (word.rotation === 90) {
+    [width, height] = [height, width];
+  }
 
   return { width, height };
 }

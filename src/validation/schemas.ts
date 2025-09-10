@@ -44,6 +44,7 @@ export const WordCloudItemSchema = z.object({
   color: z.string().optional(),
   x: z.number().optional(),
   y: z.number().optional(),
+  rotation: z.number().optional(),
 });
 
 // Export types inferred from schemas

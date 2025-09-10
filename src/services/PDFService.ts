@@ -19,24 +19,33 @@ export class PDFService {
     if (this.fontsRegistered) return;
 
     try {
-      // Register common fonts that work well with react-pdf
-      const fontRegistrations = fonts.map(async (fontFamily) => {
-        try {
-          // Use Google Fonts CDN URLs for font registration
-          const fontUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}:wght@300;400;500;600;700;800;900&display=swap`;
-          
-          // For react-pdf, we need to register fonts with specific weights
-          // This is a simplified approach - in production, you'd want to parse the CSS and extract font URLs
-          Font.register({
-            family: fontFamily,
-            src: fontUrl,
-          });
-        } catch (error) {
-          console.warn(`Failed to register font ${fontFamily}:`, error);
-        }
-      });
+      // Register safe web fonts that work with react-pdf
+      // For now, we'll use system fonts that are widely available
+      const safeFonts = [
+        'Helvetica',
+        'Times-Roman', 
+        'Courier',
+        'Helvetica-Bold',
+        'Times-Bold',
+        'Courier-Bold'
+      ];
 
-      await Promise.all(fontRegistrations);
+      // Map Google Font names to safe alternatives
+      const fontMappings: Record<string, string> = {
+        'Inter': 'Helvetica',
+        'Roboto': 'Helvetica',
+        'Open Sans': 'Helvetica',
+        'Lato': 'Helvetica',
+        'Montserrat': 'Helvetica',
+        'Poppins': 'Helvetica',
+        'Source Sans Pro': 'Helvetica',
+        'Oswald': 'Helvetica-Bold',
+        'Raleway': 'Helvetica',
+        'Ubuntu': 'Helvetica'
+      };
+
+      // No need to register system fonts - they're built into react-pdf
+      console.log('Using system fonts for PDF generation:', safeFonts);
       this.fontsRegistered = true;
     } catch (error) {
       console.error('Failed to register fonts:', error);
@@ -64,9 +73,10 @@ export class PDFService {
         items = items.slice(0, 200);
       }
 
+      // Items already use PDF-safe fonts from FontService
+
       // Register fonts used in the word cloud with optimization
       const uniqueFonts = [...new Set(items.map(item => item.fontFamily))];
-      await this.performanceService.optimizeFontLoading(uniqueFonts);
       await this.registerFonts(uniqueFonts);
 
       // Create PDF document with timeout protection
@@ -84,12 +94,12 @@ export class PDFService {
                   style: {
                     ...styles.wordCloudText,
                     fontSize: item.size,
-                    fontWeight: item.weight as any,
-                    fontFamily: item.fontFamily,
+                    fontFamily: item.fontFamily, // PDF-safe font from FontService
                     color: item.color || '#333333',
                     position: 'absolute',
                     left: item.x || 0,
                     top: item.y || 0,
+                    transform: item.rotation ? `rotate(${item.rotation}deg)` : undefined,
                   }
                 }, item.text)
               )
@@ -401,6 +411,47 @@ export class PDFService {
   }
 
   /**
+   * Map Google Font names to safe PDF font names
+   * @param fontFamily Original font family name
+   * @param weight Font weight
+   * @returns Safe font family name for PDF
+   */
+  private mapToSafeFont(fontFamily: string, weight: number): string {
+    const fontMappings: Record<string, string> = {
+      'Inter': 'Helvetica',
+      'Roboto': 'Helvetica',
+      'Open Sans': 'Helvetica',
+      'Lato': 'Helvetica',
+      'Montserrat': 'Helvetica',
+      'Poppins': 'Helvetica',
+      'Source Sans Pro': 'Helvetica',
+      'Oswald': 'Helvetica',
+      'Raleway': 'Helvetica',
+      'Ubuntu': 'Helvetica',
+      'Playfair Display': 'Times-Roman',
+      'Merriweather': 'Times-Roman',
+      'Crimson Text': 'Times-Roman',
+      'Libre Baskerville': 'Times-Roman',
+      'Nunito': 'Helvetica',
+      'Work Sans': 'Helvetica',
+      'Fira Sans': 'Helvetica',
+      'PT Sans': 'Helvetica'
+    };
+
+    let baseFont = fontMappings[fontFamily] || 'Helvetica';
+    
+    // Apply weight variations for supported fonts
+    if (weight >= 700) {
+      if (baseFont === 'Helvetica') return 'Helvetica-Bold';
+      if (baseFont === 'Times-Roman') return 'Times-Bold';
+      if (baseFont === 'Courier') return 'Courier-Bold';
+    }
+    
+    console.log(`Mapping font "${fontFamily}" (weight: ${weight}) to "${baseFont}"`);
+    return baseFont;
+  }
+
+  /**
    * Convert pixel coordinates to PDF points
    * @param pixels Pixel value
    * @param dpi DPI setting (default: 72)
@@ -474,8 +525,13 @@ export class PDFService {
     items.forEach(item => {
       if (item.x !== undefined && item.y !== undefined) {
         // Approximate text bounds
-        const textWidth = item.text.length * item.size * 0.6;
-        const textHeight = item.size;
+        let textWidth = item.text.length * item.size * 0.6;
+        let textHeight = item.size;
+
+        // If rotated 90 degrees, swap width and height for bounds calculation
+        if (item.rotation === 90) {
+          [textWidth, textHeight] = [textHeight, textWidth];
+        }
 
         const left = item.x - textWidth / 2;
         const right = item.x + textWidth / 2;

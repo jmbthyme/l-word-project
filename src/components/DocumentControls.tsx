@@ -33,7 +33,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
   const [wordCloudConfig, setWordCloudConfig] = useState<WordCloudConfig>({
     paperSize: 'A4',
     orientation: 'landscape',
-    colorScheme: 'color'
+    colorScheme: 'color',
+    dpi: 300
   });
 
   const handlePaperSizeChange = (paperSize: 'A4' | 'A3') => {
@@ -50,6 +51,12 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
 
   const handleColorSchemeChange = (colorScheme: 'color' | 'grayscale' | 'black') => {
     const newConfig = { ...wordCloudConfig, colorScheme };
+    setWordCloudConfig(newConfig);
+    onConfigChange?.(newConfig);
+  };
+
+  const handleDPIChange = (dpi: 300 | 600) => {
+    const newConfig = { ...wordCloudConfig, dpi };
     setWordCloudConfig(newConfig);
     onConfigChange?.(newConfig);
   };
@@ -116,8 +123,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               onClick={() => handlePaperSizeChange('A4')}
               disabled={isDisabled}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${wordCloudConfig.paperSize === 'A4'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               A4 (8.3" × 11.7")
@@ -127,8 +134,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               onClick={() => handlePaperSizeChange('A3')}
               disabled={isDisabled}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${wordCloudConfig.paperSize === 'A3'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               A3 (11.7" × 16.5")
@@ -147,8 +154,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               onClick={() => handleOrientationChange('portrait')}
               disabled={isDisabled}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${wordCloudConfig.orientation === 'portrait'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               Portrait
@@ -158,8 +165,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               onClick={() => handleOrientationChange('landscape')}
               disabled={isDisabled}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${wordCloudConfig.orientation === 'landscape'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               Landscape
@@ -221,10 +228,49 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
           </div>
         </div>
 
+        {/* Print Quality (DPI) Selection */}
+        <div className="control-group">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Print Quality
+          </label>
+          <div className="space-y-2">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="dpi"
+                value="300"
+                checked={wordCloudConfig.dpi === 300}
+                onChange={() => handleDPIChange(300)}
+                disabled={isDisabled}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 disabled:opacity-50"
+              />
+              <span className="ml-2 text-sm text-gray-700">
+                <span className="font-medium">300 DPI</span> - Professional Standard
+                <div className="text-xs text-gray-500 ml-0">Perfect for business, marketing, posters (~25MB)</div>
+              </span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="dpi"
+                value="600"
+                checked={wordCloudConfig.dpi === 600}
+                onChange={() => handleDPIChange(600)}
+                disabled={isDisabled}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 disabled:opacity-50"
+              />
+              <span className="ml-2 text-sm text-gray-700">
+                <span className="font-medium">600 DPI</span> - Ultra High-End
+                <div className="text-xs text-gray-500 ml-0">For fine art, museum quality, luxury prints (~100MB)</div>
+              </span>
+            </label>
+          </div>
+        </div>
+
         {/* Configuration Summary */}
         <div className="config-summary bg-gray-50 rounded-md p-3">
           <p className="text-sm text-gray-600">
-            <span className="font-medium">Selected:</span> {wordCloudConfig.paperSize} {wordCloudConfig.orientation}, {wordCloudConfig.colorScheme}
+            <span className="font-medium">Selected:</span> {wordCloudConfig.paperSize} {wordCloudConfig.orientation}, {wordCloudConfig.colorScheme}, {wordCloudConfig.dpi} DPI
             {wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'landscape' &&
               ' (11.7" × 8.3")'
             }
@@ -238,6 +284,12 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               ' (11.7" × 16.5")'
             }
           </p>
+          <p className="text-xs text-gray-500 mt-1">
+            {wordCloudConfig.dpi === 300 ?
+              'Professional quality suitable for most printing needs' :
+              'Ultra high-end quality for fine art and luxury printing'
+            }
+          </p>
         </div>
 
         {/* Generate Word Cloud Preview Button */}
@@ -245,8 +297,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
           onClick={handleGenerateWordCloudPreview}
           disabled={isDisabled}
           className={`w-full py-3 px-4 rounded-md text-sm font-medium transition-colors ${isDisabled
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
             }`}
         >
           {isGeneratingPreview ? (
@@ -268,8 +320,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
             onClick={handleDownloadWordCloudPDF}
             disabled={isDownloadingPDF}
             className={`w-full py-2 px-4 rounded-md text-sm font-medium transition-colors ${isDownloadingPDF
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
               }`}
           >
             {isDownloadingPDF ? (
@@ -285,7 +337,7 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Download Word Cloud PDF
+                Download Word Cloud Image
               </span>
             )}
           </button>
@@ -318,8 +370,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
           onClick={handleGenerateDossierPreview}
           disabled={isDisabled}
           className={`w-full py-3 px-4 rounded-md text-sm font-medium transition-colors ${isDisabled
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
             }`}
         >
           {isGeneratingPreview ? (
@@ -341,8 +393,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
             onClick={handleDownloadDossierPDF}
             disabled={isDownloadingPDF}
             className={`w-full py-2 px-4 rounded-md text-sm font-medium transition-colors ${isDownloadingPDF
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
               }`}
           >
             {isDownloadingPDF ? (

@@ -6,6 +6,7 @@ import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastContainer, useToast } from './components/Toast';
 import { PDFService } from './services/PDFService';
+import { ImageExportService } from './services/ImageExportService';
 import { FontService } from './services/FontService';
 import { PerformanceService } from './services/PerformanceService';
 import { ErrorHandlingService, setupGlobalErrorHandling } from './services/ErrorHandlingService';
@@ -29,11 +30,13 @@ function App() {
   const [wordCloudConfig, setWordCloudConfig] = useState<WordCloudConfig>({
     paperSize: 'A4',
     orientation: 'landscape',
-    colorScheme: 'color'
+    colorScheme: 'color',
+    dpi: 300
   });
 
   // Services
   const [pdfService] = useState(() => new PDFService());
+  const [imageExportService] = useState(() => new ImageExportService());
   const [fontService] = useState(() => new FontService());
   const [performanceService] = useState(() => PerformanceService.getInstance());
   const [errorService] = useState(() => ErrorHandlingService.getInstance());
@@ -146,10 +149,8 @@ function App() {
       // Reset toast generation tracking for new preview
       lastToastGeneration.current = '';
 
-      // Use setTimeout to ensure fonts state is updated before showing the word cloud
-      setTimeout(() => {
-        setCurrentView('wordcloud');
-      }, 100);
+      // Set the view to show WordCloudGenerator which will handle the layout
+      setCurrentView('wordcloud');
 
       // Show success toast - but note that layout is still being generated
       addToast({
@@ -177,8 +178,8 @@ function App() {
     }
   }, [appState.data, fontService, performanceService, errorService, addToast]);
 
-  // Download Word Cloud PDF
-  const handleDownloadWordCloudPDF = useCallback(async () => {
+  // Download Word Cloud as Image
+  const handleDownloadWordCloudImage = useCallback(async () => {
     if (wordCloudItems.length === 0) {
       addToast({
         title: 'No Word Cloud Ready',
@@ -189,68 +190,48 @@ function App() {
       return;
     }
 
-    // Validate that wordCloudItems have proper positions
-    const itemsWithPositions = wordCloudItems.filter(item => item.x !== undefined && item.y !== undefined);
-
-    if (itemsWithPositions.length === 0) {
-      addToast({
-        title: 'Word Cloud Not Ready',
-        message: 'Word cloud layout is still being generated. Please wait a moment and try again.',
-        type: 'warning',
-        duration: 4000
-      });
-      return;
-    }
-
     setIsDownloadingPDF(true);
     setAppState(prev => ({ ...prev, error: null }));
 
-    const timer = performanceService.createTimer('Word Cloud PDF Download');
+    const timer = performanceService.createTimer('Word Cloud Image Download');
 
     try {
-      // Debug: Log the items being sent to PDF generation
-      console.log('Generating PDF with config:', wordCloudConfig);
-      console.log('Items for PDF generation:', wordCloudItems);
+      // Get the SVG element from the word cloud preview
+      const svgElement = imageExportService.getWordCloudSVG();
+      
+      if (!svgElement) {
+        throw new Error('Could not find word cloud SVG element');
+      }
 
-      // Generate PDF with retry mechanism
-      const pdfBlob = await errorService.withRetry(
-        () => pdfService.generateWordCloudPDF(wordCloudItems, wordCloudConfig),
-        2,
-        2000,
-        'Word Cloud PDF Generation'
-      );
-
-      console.log('Generated PDF blob size:', pdfBlob.size);
-
-      // Download PDF
-      const filename = `word-cloud-${wordCloudConfig.paperSize}-${wordCloudConfig.orientation}-${wordCloudConfig.colorScheme}-${new Date().toISOString().split('T')[0]}`;
-      pdfService.downloadPDF(pdfBlob, filename);
+      // Export as professional print-ready image
+      await imageExportService.exportWordCloudAsImage(svgElement, wordCloudConfig, {
+        dpi: wordCloudConfig.dpi, // Use selected DPI (300 or 600)
+        format: 'png', // PNG for best quality with transparency support
+        quality: 1.0 // Maximum quality
+      });
 
       // Show success toast
       addToast({
         title: 'Word Cloud Downloaded',
-        message: `Successfully downloaded ${wordCloudConfig.paperSize} ${wordCloudConfig.orientation} Word Cloud PDF`,
+        message: `Successfully downloaded ${wordCloudConfig.paperSize} ${wordCloudConfig.orientation} Word Cloud image`,
         type: 'success',
         duration: 5000
       });
 
     } catch (error) {
-      console.error('Word Cloud PDF download failed:', error);
+      console.error('Word Cloud image download failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
+      
       setAppState(prev => ({
         ...prev,
-        error: `Word Cloud PDF download failed: ${errorMessage}`
+        error: `Word Cloud image download failed: ${errorMessage}`
       }));
-
-      // Handle error through error service
-      errorService.handlePDFGenerationError('wordcloud', error instanceof Error ? error : new Error(String(error)));
-
+      
     } finally {
       timer.stop();
       setIsDownloadingPDF(false);
     }
-  }, [wordCloudItems, wordCloudConfig, pdfService, performanceService, errorService, addToast]);
+  }, [wordCloudItems, wordCloudConfig, imageExportService, performanceService, addToast]);
 
   // Generate Dossier Preview with performance monitoring and error handling
   const handleGenerateDossierPreview = useCallback(async () => {
@@ -420,7 +401,7 @@ function App() {
               data={appState.data}
               onGenerateWordCloudPreview={handleGenerateWordCloudPreview}
               onGenerateDossierPreview={handleGenerateDossierPreview}
-              onDownloadWordCloudPDF={handleDownloadWordCloudPDF}
+              onDownloadWordCloudPDF={handleDownloadWordCloudImage}
               onDownloadDossierPDF={handleDownloadDossierPDF}
               isGeneratingPreview={isGeneratingPreview}
               isDownloadingPDF={isDownloadingPDF}

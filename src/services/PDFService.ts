@@ -23,7 +23,7 @@ export class PDFService {
       // For now, we'll use system fonts that are widely available
       const safeFonts = [
         'Helvetica',
-        'Times-Roman', 
+        'Times-Roman',
         'Courier',
         'Helvetica-Bold',
         'Times-Bold',
@@ -61,30 +61,37 @@ export class PDFService {
    */
   async generateWordCloudPDF(items: WordCloudItem[], config: WordCloudConfig): Promise<Blob> {
     const timer = this.performanceService.createTimer('Word Cloud PDF Generation');
-    
+
     try {
       // Validate input parameters
-      
+
       // Monitor memory usage
       this.performanceService.monitorMemoryUsage();
 
       // Validate items have positions
-      const itemsWithPositions = items.filter(item => 
-        item.x !== undefined && item.y !== undefined && 
+      const itemsWithPositions = items.filter(item =>
+        item.x !== undefined && item.y !== undefined &&
         typeof item.x === 'number' && typeof item.y === 'number'
       );
-      
 
-      
+
+
       if (itemsWithPositions.length === 0) {
         throw new Error('No word cloud items have valid positions');
       }
-      
+
       // Use only items with valid positions
       items = itemsWithPositions;
-      
-      // Scale items to fit PDF page
-      items = this.scaleWordCloudForPDF(items, config);
+
+      // For now, let's try without scaling to see if positions match
+      // Just add a small margin to center the content
+      const margin = 50;
+      items = items.map(item => ({
+        ...item,
+        x: (item.x || 0) * 0.2 + margin, // Scale down from preview pixels to PDF points
+        y: (item.y || 0) * 0.2 + margin,
+        size: Math.max(8, (item.size || 12) * 0.8) // Scale down font size
+      }));
 
 
       // Validate and optimize items for performance
@@ -109,7 +116,7 @@ export class PDFService {
             style: styles.page
           },
             React.createElement(View, { style: styles.wordCloudContainer },
-              ...items.map((item, index) => 
+              ...items.map((item, index) =>
                 React.createElement(Text, {
                   key: `word-${index}`,
                   style: {
@@ -131,7 +138,7 @@ export class PDFService {
 
       // Generate PDF blob with timeout
       const blob = await this.generatePDFWithTimeout(WordCloudDocument, 10000); // 10 second timeout
-      
+
       if (!blob || blob.size === 0) {
         throw new Error('Generated PDF is empty or invalid');
       }
@@ -153,7 +160,7 @@ export class PDFService {
    */
   async generateDossierPDF(data: PersonData[], images: Map<string, string>): Promise<Blob> {
     const timer = this.performanceService.createTimer('Dossier PDF Generation');
-    
+
     try {
       // Monitor memory usage before starting
       this.performanceService.monitorMemoryUsage();
@@ -166,7 +173,7 @@ export class PDFService {
 
       // Handle large datasets with chunking strategy
       const dataChunks = this.performanceService.optimizeDatasetForPDF(data);
-      
+
       if (dataChunks.length > 1) {
         console.log(`Processing ${data.length} items in ${dataChunks.length} chunks for optimal performance`);
         return await this.generateChunkedDossierPDF(dataChunks, optimizedImages);
@@ -174,11 +181,11 @@ export class PDFService {
 
       // Import DossierGenerator dynamically to avoid circular dependencies
       const { DossierGenerator } = await import('../components/DossierGenerator');
-      
+
       // Create PDF document using DossierGenerator with optimized data
-      const DossierDocument = () => 
-        React.createElement(DossierGenerator, { 
-          data, 
+      const DossierDocument = () =>
+        React.createElement(DossierGenerator, {
+          data,
           images: optimizedImages,
           config: {
             paperSize: 'A4',
@@ -190,7 +197,7 @@ export class PDFService {
 
       // Generate PDF blob with timeout protection
       const blob = await this.generatePDFWithTimeout(DossierDocument, 10000); // 10 second timeout
-      
+
       // Validate generated blob
       if (!blob || blob.size === 0) {
         throw new Error('Generated PDF is empty or invalid');
@@ -199,7 +206,7 @@ export class PDFService {
       return blob;
     } catch (error) {
       console.error('Failed to generate Dossier PDF:', error);
-      
+
       // Provide more specific error messages
       if (error instanceof Error) {
         if (error.message.includes('memory')) {
@@ -210,7 +217,7 @@ export class PDFService {
           throw new Error(`Dossier PDF generation failed: ${error.message}`);
         }
       }
-      
+
       throw new Error(`Dossier PDF generation failed: ${error}`);
     } finally {
       timer.stop();
@@ -272,9 +279,9 @@ export class PDFService {
       console.log(`Processing chunk ${i + 1}/${dataChunks.length} (${chunk.length} items)`);
 
       try {
-        const ChunkDocument = () => 
-          React.createElement(DossierGenerator, { 
-            data: chunk, 
+        const ChunkDocument = () =>
+          React.createElement(DossierGenerator, {
+            data: chunk,
             images: optimizedImages,
             config: {
               paperSize: 'A4',
@@ -338,10 +345,10 @@ export class PDFService {
 
     // Calculate average description length (only for items that have descriptions)
     const itemsWithDescriptions = data.filter(item => item.description);
-    const avgDescriptionLength = itemsWithDescriptions.length > 0 
+    const avgDescriptionLength = itemsWithDescriptions.length > 0
       ? itemsWithDescriptions.reduce((sum, item) => sum + (item.description?.length || 0), 0) / itemsWithDescriptions.length
       : 0;
-    
+
     // Adjust items per page based on content complexity
     if (avgDescriptionLength > 500) {
       return 1; // Long descriptions - one item per page
@@ -359,7 +366,7 @@ export class PDFService {
    * @returns Promise resolving to PDF Blob
    */
   private async generatePDFWithRetry(
-    DocumentComponent: () => React.ReactElement, 
+    DocumentComponent: () => React.ReactElement,
     type: string,
     maxRetries: number = 2
   ): Promise<Blob> {
@@ -372,7 +379,7 @@ export class PDFService {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         console.warn(`PDF generation attempt ${attempt} failed:`, lastError.message);
-        
+
         if (attempt < maxRetries) {
           // Wait before retry
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
@@ -394,11 +401,11 @@ export class PDFService {
       const link = document.createElement('a');
       link.href = url;
       link.download = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
-      
+
       // Trigger download
       document.body.appendChild(link);
       link.click();
-      
+
       // Cleanup
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
@@ -460,14 +467,14 @@ export class PDFService {
     };
 
     let baseFont = fontMappings[fontFamily] || 'Helvetica';
-    
+
     // Apply weight variations for supported fonts
     if (weight >= 700) {
       if (baseFont === 'Helvetica') return 'Helvetica-Bold';
       if (baseFont === 'Times-Roman') return 'Times-Bold';
       if (baseFont === 'Courier') return 'Courier-Bold';
     }
-    
+
     console.log(`Mapping font "${fontFamily}" (weight: ${weight}) to "${baseFont}"`);
     return baseFont;
   }
@@ -498,7 +505,7 @@ export class PDFService {
 
     // Find bounds of current layout
     const bounds = this.calculateItemsBounds(items);
-    
+
     if (bounds.width === 0 || bounds.height === 0) return items;
 
     // Calculate scale factors

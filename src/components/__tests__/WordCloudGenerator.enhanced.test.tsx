@@ -40,8 +40,8 @@ describe('WordCloudGenerator - Enhanced Features', () => {
 
   describe('Configuration Reactivity', () => {
     it('should update layout when configuration changes', () => {
-      const config1: WordCloudConfig = { paperSize: 'A4', orientation: 'portrait' };
-      const config2: WordCloudConfig = { paperSize: 'A3', orientation: 'landscape' };
+      const config1: WordCloudConfig = { paperSize: 'A4', orientation: 'portrait', colorScheme: 'color', dpi: 300 };
+      const config2: WordCloudConfig = { paperSize: 'A3', orientation: 'landscape', colorScheme: 'color', dpi: 300 };
 
       const { rerender } = render(
         <WordCloudGenerator

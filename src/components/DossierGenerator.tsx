@@ -51,7 +51,7 @@ export const DossierGenerator: React.FC<DossierGeneratorProps> = ({
     return (
       <View key={`person-${index}`} style={[
         styles.personItem,
-        isLastOnPage && styles.lastPersonItem
+        ...(isLastOnPage ? [styles.lastPersonItem] : [])
       ]}>
         {/* Person Name Header */}
         <Text style={styles.personName}>{person.person}</Text>
@@ -61,7 +61,7 @@ export const DossierGenerator: React.FC<DossierGeneratorProps> = ({
           {/* Left Column - Text Content */}
           <View style={[
             styles.textColumn,
-            (!person.picture || !hasValidImage) && styles.textColumnFullWidth
+            ...(!person.picture || !hasValidImage ? [styles.textColumnFullWidth] : [])
           ]}>
             {/* Word Section */}
             <View style={styles.wordSection}>

@@ -16,7 +16,7 @@ export const WordCloudConfigSchema = z.object({
   paperSize: z.enum(['A4', 'A3']),
   orientation: z.enum(['portrait', 'landscape']),
   colorScheme: z.enum(['color', 'grayscale', 'black']).default('color'),
-  dpi: z.enum([300, 600]).default(300),
+  dpi: z.union([z.literal(300), z.literal(600)]).default(300),
 });
 
 // Schema for PDFConfig

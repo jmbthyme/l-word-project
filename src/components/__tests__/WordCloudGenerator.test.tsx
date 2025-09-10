@@ -44,7 +44,9 @@ const mockFonts: GoogleFont[] = [
 
 const mockConfig: WordCloudConfig = {
   paperSize: 'A4',
-  orientation: 'portrait'
+  orientation: 'portrait',
+  colorScheme: 'color',
+  dpi: 300
 };
 
 describe('WordCloudGenerator', () => {
@@ -269,8 +271,8 @@ describe('WordCloudGenerator', () => {
       const frequency = new Map([['test', 1]]);
       const items = generateWordCloudItems(frequency, mockFonts);
       
-      const a4Layout = generateWordCloudLayout(items, { paperSize: 'A4', orientation: 'portrait' });
-      const a3Layout = generateWordCloudLayout(items, { paperSize: 'A3', orientation: 'portrait' });
+      const a4Layout = generateWordCloudLayout(items, { paperSize: 'A4', orientation: 'portrait', colorScheme: 'color', dpi: 300 });
+      const a3Layout = generateWordCloudLayout(items, { paperSize: 'A3', orientation: 'portrait', colorScheme: 'color', dpi: 300 });
       
       // A3 should provide more space, potentially different positioning
       expect(a4Layout).toBeDefined();
@@ -281,8 +283,8 @@ describe('WordCloudGenerator', () => {
       const frequency = new Map([['test', 1]]);
       const items = generateWordCloudItems(frequency, mockFonts);
       
-      const portraitLayout = generateWordCloudLayout(items, { paperSize: 'A4', orientation: 'portrait' });
-      const landscapeLayout = generateWordCloudLayout(items, { paperSize: 'A4', orientation: 'landscape' });
+      const portraitLayout = generateWordCloudLayout(items, { paperSize: 'A4', orientation: 'portrait', colorScheme: 'color', dpi: 300 });
+      const landscapeLayout = generateWordCloudLayout(items, { paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 });
       
       expect(portraitLayout).toBeDefined();
       expect(landscapeLayout).toBeDefined();

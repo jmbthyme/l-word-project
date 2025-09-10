@@ -7,7 +7,7 @@ import {
   type WordCloudConfig,
   type PDFConfig
 } from './schemas';
-import type { ValidationError } from '../types';
+
 
 /**
  * Validates JSON data against PersonData schema

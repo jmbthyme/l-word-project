@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, pdf, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
 import type { WordCloudItem, WordCloudConfig, PersonData } from '../types';
 import { PerformanceService } from './PerformanceService';
 
@@ -15,7 +15,7 @@ export class PDFService {
    * Register Google Fonts with react-pdf
    * This needs to be called before generating PDFs
    */
-  async registerFonts(fonts: string[]): Promise<void> {
+  async registerFonts(_fonts: string[]): Promise<void> {
     if (this.fontsRegistered) return;
 
     try {
@@ -31,18 +31,18 @@ export class PDFService {
       ];
 
       // Map Google Font names to safe alternatives
-      const fontMappings: Record<string, string> = {
-        'Inter': 'Helvetica',
-        'Roboto': 'Helvetica',
-        'Open Sans': 'Helvetica',
-        'Lato': 'Helvetica',
-        'Montserrat': 'Helvetica',
-        'Poppins': 'Helvetica',
-        'Source Sans Pro': 'Helvetica',
-        'Oswald': 'Helvetica-Bold',
-        'Raleway': 'Helvetica',
-        'Ubuntu': 'Helvetica'
-      };
+      // const fontMappings: Record<string, string> = {
+      //   'Inter': 'Helvetica',
+      //   'Roboto': 'Helvetica',
+      //   'Open Sans': 'Helvetica',
+      //   'Lato': 'Helvetica',
+      //   'Montserrat': 'Helvetica',
+      //   'Poppins': 'Helvetica',
+      //   'Source Sans Pro': 'Helvetica',
+      //   'Oswald': 'Helvetica-Bold',
+      //   'Raleway': 'Helvetica',
+      //   'Ubuntu': 'Helvetica'
+      // };
 
       // No need to register system fonts - they're built into react-pdf
       console.log('Using system fonts for PDF generation:', safeFonts);
@@ -229,7 +229,7 @@ export class PDFService {
    * @param data Array of PersonData
    * @param images Map of filename to base64 image data
    */
-  private validateDossierData(data: PersonData[], images: Map<string, string>): void {
+  private validateDossierData(data: PersonData[], _images: Map<string, string>): void {
     if (!Array.isArray(data)) {
       throw new Error('Data must be an array');
     }
@@ -365,9 +365,9 @@ export class PDFService {
    * @param type Type of document for error reporting
    * @returns Promise resolving to PDF Blob
    */
-  private async generatePDFWithRetry(
+  private async _generatePDFWithRetry(
     DocumentComponent: () => React.ReactElement,
-    type: string,
+    _type: string,
     maxRetries: number = 2
   ): Promise<Blob> {
     let lastError: Error | null = null;
@@ -444,7 +444,7 @@ export class PDFService {
    * @param weight Font weight
    * @returns Safe font family name for PDF
    */
-  private mapToSafeFont(fontFamily: string, weight: number): string {
+  private _mapToSafeFont(fontFamily: string, weight: number): string {
     const fontMappings: Record<string, string> = {
       'Inter': 'Helvetica',
       'Roboto': 'Helvetica',

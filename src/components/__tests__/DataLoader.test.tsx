@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DataLoader } from '../DataLoader';
@@ -17,7 +17,7 @@ const mockFileReader = {
   onerror: null as ((event: ProgressEvent<FileReader>) => void) | null,
 };
 
-Object.defineProperty(global, 'FileReader', {
+Object.defineProperty(globalThis, 'FileReader', {
   writable: true,
   value: vi.fn(() => mockFileReader),
 });
@@ -305,8 +305,7 @@ describe('DataLoader - Core Functionality', () => {
     });
   });
 });
-d
-escribe('DataLoader - Error Handling', () => {
+describe('DataLoader - Error Handling', () => {
   const mockOnDataLoad = vi.fn();
   const mockOnError = vi.fn();
   const mockOnValidationErrors = vi.fn();

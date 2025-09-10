@@ -29,12 +29,12 @@ const mockImage = {
 };
 
 // Mock DOM APIs
-Object.defineProperty(global, 'performance', {
+Object.defineProperty(globalThis, 'performance', {
   value: mockPerformance,
   writable: true,
 });
 
-Object.defineProperty(global, 'document', {
+Object.defineProperty(globalThis, 'document', {
   value: {
     createElement: vi.fn((tag: string) => {
       if (tag === 'canvas') return mockCanvas;
@@ -44,7 +44,7 @@ Object.defineProperty(global, 'document', {
   writable: true,
 });
 
-Object.defineProperty(global, 'Image', {
+Object.defineProperty(globalThis, 'Image', {
   value: vi.fn(() => mockImage),
   writable: true,
 });

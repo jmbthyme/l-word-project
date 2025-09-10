@@ -350,7 +350,7 @@ function findOptimalPosition(
 
   // Use spiral search to find optimal position
   const maxRadius = Math.max(canvasDimensions.width, canvasDimensions.height) / 2;
-  const angleStep = Math.PI / 8; // 22.5 degrees
+  // const angleStep = Math.PI / 8; // 22.5 degrees
   const radiusStep = 10;
 
   for (let radius = radiusStep; radius <= maxRadius; radius += radiusStep) {

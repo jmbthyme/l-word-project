@@ -171,6 +171,8 @@ describe('Performance Benchmarks', () => {
       const config: WordCloudConfig = {
         paperSize: 'A4',
         orientation: 'landscape',
+        colorScheme: 'color',
+        dpi: 300,
       };
 
       const startTime = performance.now();

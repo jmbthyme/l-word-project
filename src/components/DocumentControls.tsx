@@ -31,10 +31,10 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
   currentView
 }) => {
   const [wordCloudConfig, setWordCloudConfig] = useState<WordCloudConfig>({
-    paperSize: 'A4',
-    orientation: 'landscape',
-    colorScheme: 'color',
-    dpi: 300
+    paperSize: 'A4' as const,
+    orientation: 'landscape' as const,
+    colorScheme: 'color' as const,
+    dpi: 300 as const
   });
 
   const handlePaperSizeChange = (paperSize: 'A4' | 'A3') => {
@@ -239,7 +239,7 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
                 type="radio"
                 name="dpi"
                 value="300"
-                checked={wordCloudConfig.dpi === 300}
+                checked={wordCloudConfig.dpi.toString() === "300"}
                 onChange={() => handleDPIChange(300)}
                 disabled={isDisabled}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 disabled:opacity-50"
@@ -254,7 +254,7 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
                 type="radio"
                 name="dpi"
                 value="600"
-                checked={wordCloudConfig.dpi === 600}
+                checked={wordCloudConfig.dpi.toString() === "600"}
                 onChange={() => handleDPIChange(600)}
                 disabled={isDisabled}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 disabled:opacity-50"

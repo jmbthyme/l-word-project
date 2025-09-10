@@ -275,7 +275,7 @@ export class ImageExportService {
    * @param containerId ID of the container element
    * @returns SVG element or null if not found
    */
-  getWordCloudSVG(containerId: string = 'word-cloud-container'): SVGSVGElement | null {
+  getWordCloudSVG(_containerId: string = 'word-cloud-container'): SVGSVGElement | null {
     const container = document.querySelector(`[class*="word-cloud-container"]`);
     if (!container) {
       console.error('Word cloud container not found');

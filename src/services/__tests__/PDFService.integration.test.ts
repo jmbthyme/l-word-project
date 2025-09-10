@@ -5,7 +5,7 @@ import type { PersonData } from '../../types';
 // Mock @react-pdf/renderer
 vi.mock('@react-pdf/renderer', () => {
   const mockPdf = vi.fn();
-  const mockToBlob = vi.fn();
+  // const mockToBlob = vi.fn();
   
   return {
     Document: vi.fn(),
@@ -144,8 +144,8 @@ describe('PDFService - Integration Tests', () => {
       const mockAppendChild = vi.fn();
       const mockRemoveChild = vi.fn();
 
-      global.URL.createObjectURL = mockCreateObjectURL;
-      global.URL.revokeObjectURL = mockRevokeObjectURL;
+      globalThis.URL.createObjectURL = mockCreateObjectURL;
+      globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
 
       const mockLink = {
         href: '',

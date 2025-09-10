@@ -34,7 +34,7 @@ export class DataService {
     const availableImageNames: string[] = [];
 
     // Read all files from the folder
-    for await (const [name, handle] of folderHandle.entries()) {
+    for await (const [name, handle] of (folderHandle as any).entries()) {
       if (handle.kind === 'file') {
         const file = await handle.getFile();
         

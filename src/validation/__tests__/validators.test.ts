@@ -106,7 +106,9 @@ describe('validateWordCloudConfig', () => {
   it('should validate correct WordCloudConfig', () => {
     const validConfig: WordCloudConfig = {
       paperSize: 'A4',
-      orientation: 'portrait'
+      orientation: 'portrait',
+      colorScheme: 'color',
+      dpi: 300
     };
 
     const result = validateWordCloudConfig(validConfig);
@@ -116,7 +118,9 @@ describe('validateWordCloudConfig', () => {
   it('should validate A3 landscape configuration', () => {
     const validConfig: WordCloudConfig = {
       paperSize: 'A3',
-      orientation: 'landscape'
+      orientation: 'landscape',
+      colorScheme: 'color',
+      dpi: 300
     };
 
     const result = validateWordCloudConfig(validConfig);

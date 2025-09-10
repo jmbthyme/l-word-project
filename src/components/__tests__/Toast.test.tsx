@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ToastContainer, useToast, type ToastMessage } from '../Toast';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { ToastContainer, type ToastMessage } from '../Toast';
 
 describe('Toast Component', () => {
   const mockToast: ToastMessage = {

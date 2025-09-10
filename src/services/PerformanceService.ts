@@ -8,7 +8,7 @@ export class PerformanceService {
   private static instance: PerformanceService;
   private performanceConfig: PerformanceConfig;
   private imageCache: Map<string, string> = new Map();
-  private compressionWorker: Worker | null = null;
+  // private compressionWorker: Worker | null = null;
 
   private constructor() {
     this.performanceConfig = {

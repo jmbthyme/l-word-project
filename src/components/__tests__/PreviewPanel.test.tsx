@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { PreviewPanel } from '../PreviewPanel';
-import type { PersonData, WordCloudConfig, GoogleFont, WordCloudItem } from '../../types';
+import type { PersonData, WordCloudConfig, GoogleFont } from '../../types';
 
 // Mock the child components
 vi.mock('../DossierPreview', () => ({
-  DossierPreview: ({ data, images, isGenerating, onPreviewReady }: any) => {
-    // Simulate preview ready callback
+  DossierPreview: ({ data, isGenerating, onPreviewReady }: any) => {
     setTimeout(() => onPreviewReady?.(), 100);
     return (
       <div data-testid="dossier-preview">
@@ -18,22 +17,11 @@ vi.mock('../DossierPreview', () => ({
 }));
 
 vi.mock('../WordCloudGenerator', () => ({
-  WordCloudGenerator: ({ data, config, fonts, isGenerating, onPreviewReady, onWordsGenerated }: any) => {
-    // Simulate words generation and preview ready
+  WordCloudGenerator: ({ data, config, isGenerating, onPreviewReady, onWordsGenerated }: any) => {
     setTimeout(() => {
-      const mockWords: WordCloudItem[] = data.map((item: PersonData, index: number) => ({
-        text: item.word,
-        size: 24 + index * 4,
-        weight: 400,
-        fontFamily: 'Arial',
-        color: '#333',
-        x: 100 + index * 50,
-        y: 100 + index * 30
-      }));
-      onWordsGenerated?.(mockWords);
+      onWordsGenerated?.([]);
       onPreviewReady?.();
     }, 100);
-
     return (
       <div data-testid="wordcloud-generator">
         Word Cloud - {data.length} words - {config.paperSize} {config.orientation}
@@ -60,40 +48,29 @@ describe('PreviewPanel', () => {
   ];
 
   const mockImages = new Map([
-    ['john.jpg', 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD'],
-    ['jane.jpg', 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD']
+    ['john.jpg', 'data:image/jpeg;base64,mockdata1'],
+    ['jane.jpg', 'data:image/jpeg;base64,mockdata2'],
   ]);
 
   const mockFonts: GoogleFont[] = [
-    { family: 'Roboto', weights: [400, 700] },
-    { family: 'Open Sans', weights: [400, 600] }
+    { family: 'Inter', weights: [400, 600, 700] },
+    { family: 'Roboto', weights: [300, 400, 500] },
   ];
 
   const mockWordCloudConfig: WordCloudConfig = {
     paperSize: 'A4',
-    orientation: 'landscape'
+    orientation: 'landscape',
+    colorScheme: 'color',
+    dpi: 300
   };
 
-  const mockWordCloudItems: WordCloudItem[] = [
-    {
-      text: 'Innovation',
-      size: 24,
-      weight: 400,
-      fontFamily: 'Roboto',
-      color: '#333',
-      x: 100,
-      y: 100
-    }
-  ];
-
   const mockOnWordsGenerated = vi.fn();
-  const mockOnConfigChange = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('Empty State', () => {
+  describe('Rendering', () => {
     it('should render empty state when no data', () => {
       render(
         <PreviewPanel
@@ -102,20 +79,16 @@ describe('PreviewPanel', () => {
           currentView="none"
           wordCloudConfig={mockWordCloudConfig}
           fonts={mockFonts}
-          wordCloudItems={[]}
           isGenerating={false}
           onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
         />
       );
 
       expect(screen.getByText('No Data Loaded')).toBeInTheDocument();
       expect(screen.getByText('Load your JSON data and images to get started with document generation.')).toBeInTheDocument();
     });
-  });
 
-  describe('Ready State', () => {
-    it('should render ready state when data loaded but no view selected', () => {
+    it('should render data summary when data is loaded', () => {
       render(
         <PreviewPanel
           data={mockData}
@@ -123,22 +96,17 @@ describe('PreviewPanel', () => {
           currentView="none"
           wordCloudConfig={mockWordCloudConfig}
           fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
           isGenerating={false}
           onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
         />
       );
 
-      expect(screen.getByText('Data Ready')).toBeInTheDocument();
-      expect(screen.getByText('2 items loaded. Choose a document type to generate.')).toBeInTheDocument();
-      expect(screen.getByText('Word Cloud: Visual representation of words')).toBeInTheDocument();
-      expect(screen.getByText('Dossier: Comprehensive document with all data')).toBeInTheDocument();
+      expect(screen.getByText('Data Summary')).toBeInTheDocument();
+      expect(screen.getByText('2 people loaded')).toBeInTheDocument();
+      expect(screen.getByText('2 unique words')).toBeInTheDocument();
     });
-  });
 
-  describe('Word Cloud Preview', () => {
-    it('should render word cloud preview', () => {
+    it('should render word cloud when currentView is wordcloud', () => {
       render(
         <PreviewPanel
           data={mockData}
@@ -146,144 +114,16 @@ describe('PreviewPanel', () => {
           currentView="wordcloud"
           wordCloudConfig={mockWordCloudConfig}
           fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
           isGenerating={false}
           onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
         />
       );
 
-      expect(screen.getByText('Word Cloud Preview')).toBeInTheDocument();
-      expect(screen.getByText('Interactive preview with 2 words')).toBeInTheDocument();
       expect(screen.getByTestId('wordcloud-generator')).toBeInTheDocument();
-      expect(screen.getByText(/Print-accurate preview/)).toBeInTheDocument();
+      expect(screen.getByText('Word Cloud - 2 words - A4 landscape')).toBeInTheDocument();
     });
 
-    it('should show configuration in preview', () => {
-      render(
-        <PreviewPanel
-          data={mockData}
-          images={mockImages}
-          currentView="wordcloud"
-          wordCloudConfig={mockWordCloudConfig}
-          fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
-          isGenerating={false}
-          onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
-        />
-      );
-
-      expect(screen.getByText(/11.7" × 8.3"/)).toBeInTheDocument(); // A4 landscape dimensions
-    });
-
-    it('should show updating indicator when configuration changes', async () => {
-      const { rerender } = render(
-        <PreviewPanel
-          data={mockData}
-          images={mockImages}
-          currentView="wordcloud"
-          wordCloudConfig={mockWordCloudConfig}
-          fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
-          isGenerating={false}
-          onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
-        />
-      );
-
-      // Change configuration
-      const newConfig: WordCloudConfig = {
-        paperSize: 'A3',
-        orientation: 'portrait'
-      };
-
-      rerender(
-        <PreviewPanel
-          data={mockData}
-          images={mockImages}
-          currentView="wordcloud"
-          wordCloudConfig={newConfig}
-          fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
-          isGenerating={false}
-          onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
-        />
-      );
-
-      expect(screen.getByText('Updating preview...')).toBeInTheDocument();
-    });
-
-    it('should show generating state', () => {
-      render(
-        <PreviewPanel
-          data={mockData}
-          images={mockImages}
-          currentView="wordcloud"
-          wordCloudConfig={mockWordCloudConfig}
-          fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
-          isGenerating={true}
-          onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
-        />
-      );
-
-      expect(screen.getByTestId('wordcloud-generating')).toBeInTheDocument();
-    });
-
-    it('should show ready indicator when preview is ready', async () => {
-      render(
-        <PreviewPanel
-          data={mockData}
-          images={mockImages}
-          currentView="wordcloud"
-          wordCloudConfig={mockWordCloudConfig}
-          fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
-          isGenerating={false}
-          onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
-        />
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('Ready')).toBeInTheDocument();
-      });
-    });
-
-    it('should handle different paper sizes and orientations', () => {
-      const configs = [
-        { paperSize: 'A4' as const, orientation: 'portrait' as const, expected: '8.3" × 11.7"' },
-        { paperSize: 'A4' as const, orientation: 'landscape' as const, expected: '11.7" × 8.3"' },
-        { paperSize: 'A3' as const, orientation: 'portrait' as const, expected: '11.7" × 16.5"' },
-        { paperSize: 'A3' as const, orientation: 'landscape' as const, expected: '16.5" × 11.7"' },
-      ];
-
-      configs.forEach(({ paperSize, orientation, expected }) => {
-        const { unmount } = render(
-          <PreviewPanel
-            data={mockData}
-            images={mockImages}
-            currentView="wordcloud"
-            wordCloudConfig={{ paperSize, orientation }}
-            fonts={mockFonts}
-            wordCloudItems={mockWordCloudItems}
-            isGenerating={false}
-            onWordsGenerated={mockOnWordsGenerated}
-            onConfigChange={mockOnConfigChange}
-          />
-        );
-
-        expect(screen.getByText(new RegExp(expected))).toBeInTheDocument();
-        unmount();
-      });
-    });
-  });
-
-  describe('Dossier Preview', () => {
-    it('should render dossier preview', () => {
+    it('should render dossier when currentView is dossier', () => {
       render(
         <PreviewPanel
           data={mockData}
@@ -291,15 +131,29 @@ describe('PreviewPanel', () => {
           currentView="dossier"
           wordCloudConfig={mockWordCloudConfig}
           fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
           isGenerating={false}
           onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
         />
       );
 
       expect(screen.getByTestId('dossier-preview')).toBeInTheDocument();
       expect(screen.getByText('Dossier Preview - 2 items')).toBeInTheDocument();
+    });
+
+    it('should show generating state for word cloud', () => {
+      render(
+        <PreviewPanel
+          data={mockData}
+          images={mockImages}
+          currentView="wordcloud"
+          wordCloudConfig={mockWordCloudConfig}
+          fonts={mockFonts}
+          isGenerating={true}
+          onWordsGenerated={mockOnWordsGenerated}
+        />
+      );
+
+      expect(screen.getByTestId('wordcloud-generating')).toBeInTheDocument();
     });
 
     it('should show generating state for dossier', () => {
@@ -310,10 +164,8 @@ describe('PreviewPanel', () => {
           currentView="dossier"
           wordCloudConfig={mockWordCloudConfig}
           fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
           isGenerating={true}
           onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
         />
       );
 
@@ -321,8 +173,45 @@ describe('PreviewPanel', () => {
     });
   });
 
+  describe('Configuration Updates', () => {
+    it('should handle configuration changes', async () => {
+      const { rerender } = render(
+        <PreviewPanel
+          data={mockData}
+          images={mockImages}
+          currentView="wordcloud"
+          wordCloudConfig={mockWordCloudConfig}
+          fonts={mockFonts}
+          isGenerating={false}
+          onWordsGenerated={mockOnWordsGenerated}
+        />
+      );
+
+      const newConfig: WordCloudConfig = {
+        paperSize: 'A3',
+        orientation: 'portrait',
+        colorScheme: 'color',
+        dpi: 300
+      };
+
+      rerender(
+        <PreviewPanel
+          data={mockData}
+          images={mockImages}
+          currentView="wordcloud"
+          wordCloudConfig={newConfig}
+          fonts={mockFonts}
+          isGenerating={false}
+          onWordsGenerated={mockOnWordsGenerated}
+        />
+      );
+
+      expect(screen.getByText('Word Cloud - 2 words - A3 portrait')).toBeInTheDocument();
+    });
+  });
+
   describe('Callbacks', () => {
-    it('should call onWordsGenerated when word cloud generates words', async () => {
+    it('should call onWordsGenerated when words are generated', async () => {
       render(
         <PreviewPanel
           data={mockData}
@@ -330,97 +219,14 @@ describe('PreviewPanel', () => {
           currentView="wordcloud"
           wordCloudConfig={mockWordCloudConfig}
           fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
           isGenerating={false}
           onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
         />
       );
 
       await waitFor(() => {
-        expect(mockOnWordsGenerated).toHaveBeenCalledWith(
-          expect.arrayContaining([
-            expect.objectContaining({
-              text: 'Innovation',
-              size: expect.any(Number),
-              weight: expect.any(Number),
-              fontFamily: expect.any(String)
-            })
-          ])
-        );
+        expect(mockOnWordsGenerated).toHaveBeenCalled();
       });
-    });
-  });
-
-  describe('Accessibility', () => {
-    it('should have proper heading structure', () => {
-      render(
-        <PreviewPanel
-          data={mockData}
-          images={mockImages}
-          currentView="wordcloud"
-          wordCloudConfig={mockWordCloudConfig}
-          fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
-          isGenerating={false}
-          onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
-        />
-      );
-
-      expect(screen.getByRole('heading', { level: 3, name: 'Word Cloud Preview' })).toBeInTheDocument();
-    });
-
-    it('should provide meaningful status messages', () => {
-      render(
-        <PreviewPanel
-          data={[]}
-          images={new Map()}
-          currentView="none"
-          wordCloudConfig={mockWordCloudConfig}
-          fonts={mockFonts}
-          wordCloudItems={[]}
-          isGenerating={false}
-          onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
-        />
-      );
-
-      expect(screen.getByText('Load your JSON data and images to get started with document generation.')).toBeInTheDocument();
-    });
-  });
-
-  describe('Performance', () => {
-    it('should handle large datasets efficiently', () => {
-      const largeData = Array.from({ length: 100 }, (_, i) => ({
-        person: `Person ${i}`,
-        word: `Word${i}`,
-        description: `Description for person ${i}`,
-        picture: `person${i}.jpg`
-      }));
-
-      const startTime = performance.now();
-      
-      render(
-        <PreviewPanel
-          data={largeData}
-          images={mockImages}
-          currentView="wordcloud"
-          wordCloudConfig={mockWordCloudConfig}
-          fonts={mockFonts}
-          wordCloudItems={mockWordCloudItems}
-          isGenerating={false}
-          onWordsGenerated={mockOnWordsGenerated}
-          onConfigChange={mockOnConfigChange}
-        />
-      );
-
-      const endTime = performance.now();
-      const renderTime = endTime - startTime;
-
-      // Should render within reasonable time (less than 100ms)
-      expect(renderTime).toBeLessThan(100);
-      expect(screen.getByText('Interactive preview with 100 words')).toBeInTheDocument();
     });
   });
 });

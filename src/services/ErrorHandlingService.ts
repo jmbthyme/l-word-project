@@ -217,7 +217,7 @@ export class ErrorHandlingService implements ErrorHandler {
     this.errorLog = [];
   }
 
-  private logError(error: Error, context: string): void {
+  public logError(error: Error, context: string): void {
     this.errorLog.push({
       timestamp: new Date(),
       error,

@@ -10,7 +10,7 @@ export class FontService {
   private fontCache: Map<string, GoogleFont> = new Map();
   private loadedFonts: Set<string> = new Set();
   private failedFonts: Set<string> = new Set();
-  private readonly GOOGLE_FONTS_API_KEY = import.meta.env.VITE_GOOGLE_FONTS_API_KEY;
+  // private readonly GOOGLE_FONTS_API_KEY = import.meta.env.VITE_GOOGLE_FONTS_API_KEY;
   private readonly GOOGLE_FONTS_BASE_URL = 'https://fonts.googleapis.com/css2';
   private performanceService = PerformanceService.getInstance();
   private errorService = ErrorHandlingService.getInstance();

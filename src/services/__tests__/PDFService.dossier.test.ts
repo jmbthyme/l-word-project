@@ -5,7 +5,7 @@ import type { PersonData } from '../../types';
 // Mock @react-pdf/renderer
 vi.mock('@react-pdf/renderer', () => {
   const mockPdf = vi.fn();
-  const mockToBlob = vi.fn();
+  // const mockToBlob = vi.fn();
   
   return {
     Document: vi.fn(),

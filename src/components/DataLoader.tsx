@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { validatePersonData, validateImageFile } from '../validation/validators';
 import type { PersonData } from '../types';
+import { PerformanceService } from '../services/PerformanceService';
 
 interface DataLoaderProps {
   onDataLoad: (data: PersonData[], images: Map<string, string>) => void;
@@ -14,6 +15,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError }) =
 
   const jsonFileRef = useRef<HTMLInputElement>(null);
   const imageFilesRef = useRef<HTMLInputElement>(null);
+  const performanceService = PerformanceService.getInstance();
 
   const handleJsonFileLoad = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -50,13 +52,23 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError }) =
     if (!files || files.length === 0) return;
 
     setIsLoading(true);
+    const timer = performanceService.createTimer('Image Loading');
+    
     try {
+      // Check file count for performance warning
+      if (files.length > 50) {
+        console.warn(`Large number of images detected (${files.length}). Loading may take longer.`);
+      }
+
       const imageMap = await loadImages(files);
-      setLoadedImages(imageMap);
+      
+      // Compress and optimize images
+      const optimizedImages = await performanceService.compressAndCacheImages(imageMap);
+      setLoadedImages(optimizedImages);
 
       // If JSON data is already loaded, trigger onDataLoad
       if (loadedData) {
-        onDataLoad(loadedData, imageMap);
+        onDataLoad(loadedData, optimizedImages);
       }
 
     } catch (error) {
@@ -66,6 +78,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError }) =
         onError('Failed to load image files.');
       }
     } finally {
+      timer.stop();
       setIsLoading(false);
     }
   };
@@ -82,6 +95,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError }) =
   const loadImages = async (files: FileList): Promise<Map<string, string>> => {
     const imageMap = new Map<string, string>();
     const loadPromises: Promise<void>[] = [];
+    const maxFileSize = 5 * 1024 * 1024; // 5MB per file
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -90,20 +104,45 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError }) =
         throw new Error(`Invalid image format for file "${file.name}". Supported formats: PNG, JPG, JPEG`);
       }
 
+      // Check file size for performance
+      if (file.size > maxFileSize) {
+        console.warn(`Large image file detected: ${file.name} (${Math.round(file.size / 1024 / 1024)}MB)`);
+      }
+
       const loadPromise = new Promise<void>((resolve, reject) => {
         const reader = new FileReader();
+        
+        // Add timeout for file reading
+        const timeoutId = setTimeout(() => {
+          reject(new Error(`Timeout reading image file: ${file.name}`));
+        }, 10000); // 10 second timeout
+
         reader.onload = () => {
+          clearTimeout(timeoutId);
           imageMap.set(file.name, reader.result as string);
           resolve();
         };
-        reader.onerror = () => reject(new Error(`Failed to read image file: ${file.name}`));
+        
+        reader.onerror = () => {
+          clearTimeout(timeoutId);
+          reject(new Error(`Failed to read image file: ${file.name}`));
+        };
+        
         reader.readAsDataURL(file);
       });
 
       loadPromises.push(loadPromise);
     }
 
-    await Promise.all(loadPromises);
+    // Process images with some concurrency control
+    const results = await Promise.allSettled(loadPromises);
+    
+    // Check for failures
+    const failures = results.filter(result => result.status === 'rejected');
+    if (failures.length > 0) {
+      console.warn(`${failures.length} images failed to load`);
+    }
+
     return imageMap;
   };
 

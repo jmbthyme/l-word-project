@@ -3,8 +3,10 @@ import { DataLoader } from './components/DataLoader';
 import { DocumentControls } from './components/DocumentControls';
 import { DossierPreview } from './components/DossierPreview';
 import { WordCloudGenerator } from './components/WordCloudGenerator';
+import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { PDFService } from './services/PDFService';
 import { FontService } from './services/FontService';
+import { PerformanceService } from './services/PerformanceService';
 import type { PersonData, WordCloudConfig, AppState, WordCloudItem } from './types';
 
 function App() {
@@ -25,6 +27,10 @@ function App() {
   // Services
   const [pdfService] = useState(() => new PDFService());
   const [fontService] = useState(() => new FontService());
+  const [performanceService] = useState(() => PerformanceService.getInstance());
+
+  // Performance monitoring state
+  const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false);
 
   // Handle data loading from DataLoader component
   const handleDataLoad = useCallback((data: PersonData[], images: Map<string, string>) => {
@@ -48,18 +54,23 @@ function App() {
     setCurrentView('none');
   }, []);
 
-  // Generate Word Cloud PDF
+  // Generate Word Cloud PDF with performance monitoring
   const handleGenerateWordCloud = useCallback(async (config: WordCloudConfig) => {
     if (appState.data.length === 0) return;
 
     setIsGeneratingPDF(true);
     setAppState(prev => ({ ...prev, error: null }));
 
+    const timer = performanceService.createTimer('Word Cloud Generation');
+
     try {
+      // Monitor memory before starting
+      performanceService.monitorMemoryUsage();
+
       // Extract words from data
       const words = appState.data.map(item => item.word);
       
-      // Preload fonts for word cloud
+      // Preload fonts for word cloud with performance optimization
       const fonts = await fontService.preloadFontsForWordCloud(words.length);
       setAppState(prev => ({ ...prev, fonts }));
 
@@ -78,7 +89,7 @@ function App() {
       setWordCloudItems(wordCloudItems);
       setCurrentView('wordcloud');
 
-      // Generate PDF
+      // Generate PDF with performance optimizations
       const pdfBlob = await pdfService.generateWordCloudPDF(wordCloudItems, config);
       
       // Download PDF
@@ -92,11 +103,12 @@ function App() {
         error: `Word Cloud generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       }));
     } finally {
+      timer.stop();
       setIsGeneratingPDF(false);
     }
-  }, [appState.data, fontService, pdfService]);
+  }, [appState.data, fontService, pdfService, performanceService]);
 
-  // Generate Dossier PDF
+  // Generate Dossier PDF with performance monitoring
   const handleGenerateDossier = useCallback(async () => {
     if (appState.data.length === 0) return;
 
@@ -104,8 +116,13 @@ function App() {
     setAppState(prev => ({ ...prev, error: null }));
     setCurrentView('dossier');
 
+    const timer = performanceService.createTimer('Dossier Generation');
+
     try {
-      // Generate PDF
+      // Monitor memory before starting
+      performanceService.monitorMemoryUsage();
+
+      // Generate PDF with performance optimizations
       const pdfBlob = await pdfService.generateDossierPDF(appState.data, appState.images);
       
       // Download PDF
@@ -119,9 +136,10 @@ function App() {
         error: `Dossier generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       }));
     } finally {
+      timer.stop();
       setIsGeneratingPDF(false);
     }
-  }, [appState.data, appState.images, pdfService]);
+  }, [appState.data, appState.images, pdfService, performanceService]);
 
   // Clear error message
   const clearError = useCallback(() => {
@@ -277,6 +295,12 @@ function App() {
           <p>PDF Document Generator - Generate professional Word Cloud and Dossier documents</p>
         </footer>
       </div>
+
+      {/* Performance Monitor */}
+      <PerformanceMonitor
+        isVisible={showPerformanceMonitor}
+        onToggle={setShowPerformanceMonitor}
+      />
     </div>
   );
 }

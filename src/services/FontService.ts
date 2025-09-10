@@ -1,4 +1,5 @@
 import type { GoogleFont } from '../types';
+import { PerformanceService } from './PerformanceService';
 
 /**
  * FontService handles Google Fonts integration, loading, caching, and selection
@@ -9,6 +10,7 @@ export class FontService {
   private loadedFonts: Set<string> = new Set();
   private readonly GOOGLE_FONTS_API_KEY = import.meta.env.VITE_GOOGLE_FONTS_API_KEY;
   private readonly GOOGLE_FONTS_BASE_URL = 'https://fonts.googleapis.com/css2';
+  private performanceService = PerformanceService.getInstance();
 
   // Curated list of fonts suitable for word clouds
   private readonly WORD_CLOUD_FONTS: GoogleFont[] = [
@@ -30,52 +32,82 @@ export class FontService {
   ];
 
   /**
-   * Load Google Fonts by family names
+   * Load Google Fonts by family names with performance optimizations
    * @param families Array of font family names to load
    * @returns Promise that resolves when fonts are loaded
    */
   async loadGoogleFonts(families: string[]): Promise<void> {
-    const fontsToLoad = families.filter(family => !this.loadedFonts.has(family));
-
-    if (fontsToLoad.length === 0) {
-      return;
-    }
-
+    const timer = this.performanceService.createTimer('Font Loading');
+    
     try {
-      // Create font face declarations for each font
-      const fontPromises = fontsToLoad.map(family => this.loadSingleFont(family));
-      await Promise.all(fontPromises);
+      const fontsToLoad = families.filter(family => !this.loadedFonts.has(family));
 
-      // Mark fonts as loaded
-      fontsToLoad.forEach(family => this.loadedFonts.add(family));
-    } catch (error) {
-      console.error('Failed to load Google Fonts:', error);
-      throw new Error(`Font loading failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      if (fontsToLoad.length === 0) {
+        return;
+      }
+
+      // Limit font loading for performance
+      const maxFonts = this.performanceService.getConfig().fontCacheSize;
+      const limitedFonts = fontsToLoad.slice(0, Math.min(maxFonts, 10));
+
+      if (limitedFonts.length < fontsToLoad.length) {
+        console.warn(`Font loading limited to ${limitedFonts.length} fonts for performance`);
+      }
+
+      // Load fonts with timeout and error handling
+      const fontPromises = limitedFonts.map(family => 
+        this.loadSingleFontWithTimeout(family, 3000) // 3 second timeout per font
+      );
+      
+      const results = await Promise.allSettled(fontPromises);
+      
+      // Mark successfully loaded fonts
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          this.loadedFonts.add(limitedFonts[index]);
+        } else {
+          console.warn(`Failed to load font ${limitedFonts[index]}:`, result.reason);
+        }
+      });
+
+      // Clean up font cache if needed
+      this.cleanupFontCache();
+    } finally {
+      timer.stop();
     }
   }
 
   /**
-   * Load a single font family
+   * Load a single font family with timeout protection
    * @param family Font family name
-   * @returns Promise that resolves when font is loaded
+   * @param timeoutMs Timeout in milliseconds
+   * @returns Promise that resolves when font is loaded or times out
    */
-  private async loadSingleFont(family: string): Promise<void> {
+  private async loadSingleFontWithTimeout(family: string, timeoutMs: number): Promise<void> {
     const fontData = this.WORD_CLOUD_FONTS.find(font => font.family === family);
     if (!fontData) {
       throw new Error(`Font family "${family}" not found in available fonts`);
     }
 
-    // Create CSS link for Google Fonts
-    const weightsParam = fontData.weights.join(';');
-    const fontUrl = `${this.GOOGLE_FONTS_BASE_URL}?family=${encodeURIComponent(family)}:wght@${weightsParam}&display=swap`;
-
     return new Promise((resolve, reject) => {
+      // Set up timeout
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`Font loading timeout for: ${family}`));
+      }, timeoutMs);
+
       // Check if font link already exists
       const existingLink = document.querySelector(`link[href*="${encodeURIComponent(family)}"]`);
       if (existingLink) {
+        clearTimeout(timeoutId);
+        this.fontCache.set(family, fontData);
         resolve();
         return;
       }
+
+      // Create CSS link for Google Fonts with optimized weights
+      const essentialWeights = this.getEssentialWeights(fontData.weights);
+      const weightsParam = essentialWeights.join(';');
+      const fontUrl = `${this.GOOGLE_FONTS_BASE_URL}?family=${encodeURIComponent(family)}:wght@${weightsParam}&display=swap`;
 
       // Create and append font link
       const link = document.createElement('link');
@@ -83,17 +115,61 @@ export class FontService {
       link.href = fontUrl;
 
       link.onload = () => {
+        clearTimeout(timeoutId);
         // Cache the font data
         this.fontCache.set(family, fontData);
         resolve();
       };
 
       link.onerror = () => {
+        clearTimeout(timeoutId);
         reject(new Error(`Failed to load font: ${family}`));
       };
 
       document.head.appendChild(link);
     });
+  }
+
+  /**
+   * Get essential font weights to reduce loading time
+   * @param weights Array of available weights
+   * @returns Array of essential weights
+   */
+  private getEssentialWeights(weights: number[]): number[] {
+    // Prioritize common weights for better performance
+    const essentialWeights = [400, 700]; // Normal and bold
+    const availableEssential = essentialWeights.filter(weight => weights.includes(weight));
+    
+    // If essential weights aren't available, use the first few available weights
+    if (availableEssential.length === 0) {
+      return weights.slice(0, 3); // Maximum 3 weights for performance
+    }
+    
+    // Add one more weight if available for variety
+    const additionalWeight = weights.find(w => !essentialWeights.includes(w));
+    if (additionalWeight) {
+      availableEssential.push(additionalWeight);
+    }
+    
+    return availableEssential;
+  }
+
+  /**
+   * Clean up font cache when it gets too large
+   */
+  private cleanupFontCache(): void {
+    const maxCacheSize = this.performanceService.getConfig().fontCacheSize;
+    
+    if (this.fontCache.size > maxCacheSize) {
+      // Remove oldest entries (simple FIFO approach)
+      const keysToRemove = Array.from(this.fontCache.keys()).slice(0, this.fontCache.size - maxCacheSize);
+      keysToRemove.forEach(key => {
+        this.fontCache.delete(key);
+        this.loadedFonts.delete(key);
+      });
+      
+      console.log(`Cleaned up font cache, removed ${keysToRemove.length} entries`);
+    }
   }
 
   /**

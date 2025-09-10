@@ -4,3 +4,4 @@ export type { DocumentControlsProps } from './DocumentControls';
 export { DossierPreview } from './DossierPreview';
 export { WordCloudGenerator } from './WordCloudGenerator';
 export type { WordCloudGeneratorProps, WordCloudLayoutResult } from './WordCloudGenerator';
+export { PerformanceMonitor } from './PerformanceMonitor';

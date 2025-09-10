@@ -207,9 +207,8 @@ export function generateWordCloudItems(
     const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
     const randomWeight = randomFont.weights[Math.floor(Math.random() * randomFont.weights.length)];
 
-    // Generate random color (optional - can be overridden)
-    const colors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    // Generate color based on scheme (will be overridden by layout function)
+    const randomColor = '#333333'; // Default color, will be set by layout function
 
     return {
       text,
@@ -257,7 +256,8 @@ export function generateWordCloudLayout(
     const positionedWord: WordCloudItem = {
       ...item,
       x: position.x,
-      y: position.y
+      y: position.y,
+      color: getColorForScheme(config.colorScheme)
     };
 
     positionedWords.push(positionedWord);
@@ -270,6 +270,26 @@ export function generateWordCloudLayout(
     words: positionedWords,
     bounds
   };
+}
+
+/**
+ * Get color based on the selected color scheme
+ * @param colorScheme The selected color scheme
+ * @returns Color string
+ */
+function getColorForScheme(colorScheme: 'color' | 'grayscale' | 'black'): string {
+  switch (colorScheme) {
+    case 'color':
+      const colors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be185d', '#0f766e'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    case 'grayscale':
+      const grayValues = ['#374151', '#4b5563', '#6b7280', '#9ca3af', '#d1d5db'];
+      return grayValues[Math.floor(Math.random() * grayValues.length)];
+    case 'black':
+      return '#000000';
+    default:
+      return '#333333';
+  }
 }
 
 /**

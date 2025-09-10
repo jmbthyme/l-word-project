@@ -27,7 +27,8 @@ function App() {
   const [wordCloudItems, setWordCloudItems] = useState<WordCloudItem[]>([]);
   const [wordCloudConfig, setWordCloudConfig] = useState<WordCloudConfig>({
     paperSize: 'A4',
-    orientation: 'landscape'
+    orientation: 'landscape',
+    colorScheme: 'color'
   });
 
   // Services
@@ -137,16 +138,35 @@ function App() {
 
       // Generate word cloud layout (this will be handled by WordCloudGenerator)
       // For now, we'll create a simple layout
-      const wordCloudItems: WordCloudItem[] = words.map((word, index) => ({
-        text: word,
-        size: Math.max(12, 48 - (index * 2)), // Decreasing size
-        weight: 400 + (Math.random() * 500), // Random weight between 400-900
-        fontFamily: fonts[index % fonts.length]?.family || 'Arial',
-        color: `hsl(${Math.random() * 360}, 70%, 50%)`, // Random color
-        x: Math.random() * 400 + 100, // Random position
-        y: Math.random() * 300 + 100,
-        rotation: Math.random() < 0.5 ? 0 : 90 // 50% chance of horizontal (0°) or vertical (90°)
-      }));
+      const wordCloudItems: WordCloudItem[] = words.map((word, index) => {
+        // Generate color based on scheme
+        let color: string;
+        switch (config.colorScheme) {
+          case 'color':
+            color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+            break;
+          case 'grayscale':
+            const grayValue = Math.floor(Math.random() * 128) + 64; // Gray values between 64-192
+            color = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+            break;
+          case 'black':
+            color = '#000000';
+            break;
+          default:
+            color = '#333333';
+        }
+
+        return {
+          text: word,
+          size: Math.max(12, 48 - (index * 2)), // Decreasing size
+          weight: 400 + (Math.random() * 500), // Random weight between 400-900
+          fontFamily: fonts[index % fonts.length]?.family || 'Arial',
+          color,
+          x: Math.random() * 400 + 100, // Random position
+          y: Math.random() * 300 + 100,
+          rotation: Math.random() < 0.5 ? 0 : 90 // 50% chance of horizontal (0°) or vertical (90°)
+        };
+      });
 
       setWordCloudItems(wordCloudItems);
       setCurrentView('wordcloud');

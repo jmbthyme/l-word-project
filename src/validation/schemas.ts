@@ -15,6 +15,7 @@ export const PersonDataArraySchema = z.array(PersonDataSchema).min(1, 'At least 
 export const WordCloudConfigSchema = z.object({
   paperSize: z.enum(['A4', 'A3']),
   orientation: z.enum(['portrait', 'landscape']),
+  colorScheme: z.enum(['color', 'grayscale', 'black']).default('color'),
 });
 
 // Schema for PDFConfig

@@ -24,7 +24,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
 }) => {
   const [wordCloudConfig, setWordCloudConfig] = useState<WordCloudConfig>({
     paperSize: 'A4',
-    orientation: 'landscape'
+    orientation: 'landscape',
+    colorScheme: 'color'
   });
 
   const handlePaperSizeChange = (paperSize: 'A4' | 'A3') => {
@@ -35,6 +36,12 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
 
   const handleOrientationChange = (orientation: 'portrait' | 'landscape') => {
     const newConfig = { ...wordCloudConfig, orientation };
+    setWordCloudConfig(newConfig);
+    onConfigChange?.(newConfig);
+  };
+
+  const handleColorSchemeChange = (colorScheme: 'color' | 'grayscale' | 'black') => {
+    const newConfig = { ...wordCloudConfig, colorScheme };
     setWordCloudConfig(newConfig);
     onConfigChange?.(newConfig);
   };
@@ -144,10 +151,64 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
           </div>
         </div>
 
+        {/* Color Scheme Selection */}
+        <div className="control-group">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Color Scheme
+          </label>
+          <div className="space-y-2">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="colorScheme"
+                value="color"
+                checked={wordCloudConfig.colorScheme === 'color'}
+                onChange={() => handleColorSchemeChange('color')}
+                disabled={isDisabled}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 disabled:opacity-50"
+              />
+              <span className="ml-2 text-sm text-gray-700 flex items-center">
+                <span className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 mr-2"></span>
+                Color
+              </span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="colorScheme"
+                value="grayscale"
+                checked={wordCloudConfig.colorScheme === 'grayscale'}
+                onChange={() => handleColorSchemeChange('grayscale')}
+                disabled={isDisabled}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 disabled:opacity-50"
+              />
+              <span className="ml-2 text-sm text-gray-700 flex items-center">
+                <span className="w-4 h-4 rounded-full bg-gradient-to-r from-gray-300 via-gray-500 to-gray-700 mr-2"></span>
+                Grayscale
+              </span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="colorScheme"
+                value="black"
+                checked={wordCloudConfig.colorScheme === 'black'}
+                onChange={() => handleColorSchemeChange('black')}
+                disabled={isDisabled}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 disabled:opacity-50"
+              />
+              <span className="ml-2 text-sm text-gray-700 flex items-center">
+                <span className="w-4 h-4 rounded-full bg-black mr-2"></span>
+                Black
+              </span>
+            </label>
+          </div>
+        </div>
+
         {/* Configuration Summary */}
         <div className="config-summary bg-gray-50 rounded-md p-3">
           <p className="text-sm text-gray-600">
-            <span className="font-medium">Selected:</span> {wordCloudConfig.paperSize} {wordCloudConfig.orientation}
+            <span className="font-medium">Selected:</span> {wordCloudConfig.paperSize} {wordCloudConfig.orientation}, {wordCloudConfig.colorScheme}
             {wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'landscape' && 
               ' (11.7" × 8.3")'
             }

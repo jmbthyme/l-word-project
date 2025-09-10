@@ -152,10 +152,10 @@ function App() {
       // Set the view to show WordCloudGenerator which will handle the layout
       setCurrentView('wordcloud');
 
-      // Show success toast - but note that layout is still being generated
+      // Show success toast - but note that layout is still being created
       addToast({
         title: 'Word Cloud Preview Loading',
-        message: `Generating layout for ${words.length} words...`,
+        message: `Creating layout for ${words.length} words...`,
         type: 'info',
         duration: 3000
       });
@@ -351,10 +351,10 @@ function App() {
         {/* Header */}
         <header className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            PDF Document Generator
+            L Word Project
           </h1>
           <p className="text-lg text-gray-600">
-            Generate Word Cloud and Dossier PDFs from your data
+            Generate beautiful Word Clouds and comprehensive Dossiers from your data
           </p>
         </header>
 
@@ -423,11 +423,11 @@ function App() {
                   <div className="ml-3">
                     <p className="text-sm font-medium text-blue-800">
                       {appState.isLoading ? 'Loading data...' :
-                        isGeneratingPreview ? 'Generating preview...' :
-                          'Downloading PDF...'}
+                        isGeneratingPreview ? 'Creating preview...' :
+                          'Downloading image...'}
                     </p>
                     <p className="text-sm text-blue-600">
-                      {isDownloadingPDF ? 'Creating PDF file...' : 'Please wait.'}
+                      {isDownloadingPDF ? 'Creating image file...' : 'Please wait.'}
                     </p>
                   </div>
                 </div>
@@ -452,7 +452,7 @@ function App() {
 
         {/* Footer */}
         <footer className="mt-12 text-center text-sm text-gray-500">
-          <p>PDF Document Generator - Generate professional Word Cloud and Dossier documents</p>
+          <p>L Word Project - Create beautiful Word Clouds and comprehensive Dossiers</p>
         </footer>
       </div>
 

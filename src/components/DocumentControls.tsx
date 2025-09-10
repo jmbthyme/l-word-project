@@ -15,8 +15,8 @@ export interface DocumentControlsProps {
 }
 
 /**
- * DocumentControls component provides UI controls for PDF generation
- * Allows users to select paper size, orientation, and trigger document generation
+ * DocumentControls component provides UI controls for document creation
+ * Allows users to select paper size, orientation, and trigger document creation
  */
 export const DocumentControls: React.FC<DocumentControlsProps> = ({
   data,
@@ -91,12 +91,12 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
     <div className="document-controls bg-white rounded-lg shadow-md p-6 space-y-6">
       <div className="controls-header">
         <h2 className="text-xl font-semibold text-gray-800 mb-2">
-          Document Generation
+          Document Creation
         </h2>
         <p className="text-sm text-gray-600">
           {data.length === 0
-            ? 'Load data to enable document generation'
-            : `Ready to generate documents from ${data.length} items`
+            ? 'Load data to enable document creation'
+            : `Ready to create documents from ${data.length} items`
           }
         </p>
       </div>
@@ -105,10 +105,10 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
       <div className="word-cloud-controls border rounded-lg p-4 space-y-4">
         <div className="section-header">
           <h3 className="text-lg font-medium text-gray-700 mb-3">
-            Word Cloud PDF
+            Word Cloud Image
           </h3>
           <p className="text-sm text-gray-500 mb-4">
-            Generate a visual word cloud with varied fonts and sizes
+            Create a visual word cloud with varied fonts and sizes
           </p>
         </div>
 
@@ -310,7 +310,7 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               Generating Preview...
             </span>
           ) : (
-            'Generate Word Cloud Preview'
+            'Create Word Cloud Preview'
           )}
         </button>
 
@@ -348,10 +348,10 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
       <div className="dossier-controls border rounded-lg p-4 space-y-4">
         <div className="section-header">
           <h3 className="text-lg font-medium text-gray-700 mb-3">
-            Dossier PDF
+            Dossier Document
           </h3>
           <p className="text-sm text-gray-500 mb-4">
-            Generate a comprehensive document with all data (A4 Portrait)
+            Create a comprehensive document with all data (A4 Portrait)
           </p>
         </div>
 
@@ -383,7 +383,7 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               Generating Preview...
             </span>
           ) : (
-            'Generate Dossier Preview'
+            'Create Dossier Preview'
           )}
         </button>
 

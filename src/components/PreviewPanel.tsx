@@ -51,7 +51,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Loaded</h3>
         <p className="text-gray-600">
-          Load your JSON data and images to get started with document generation.
+          Load your JSON data and images to get started with document creation.
         </p>
       </div>
     );
@@ -68,7 +68,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">Data Ready</h3>
         <p className="text-gray-600 mb-4">
-          {data.length} items loaded. Choose a document type to generate.
+          {data.length} items loaded. Choose a document type to create.
         </p>
         <div className="text-sm text-gray-500 space-y-1">
           <div className="flex items-center justify-center space-x-2">

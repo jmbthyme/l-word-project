@@ -22,7 +22,8 @@ function App() {
   });
 
   // PDF generation state
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [currentView, setCurrentView] = useState<'none' | 'wordcloud' | 'dossier'>('none');
   const [wordCloudItems, setWordCloudItems] = useState<WordCloudItem[]>([]);
   const [wordCloudConfig, setWordCloudConfig] = useState<WordCloudConfig>({
@@ -68,7 +69,7 @@ function App() {
       images: new Map()
     }));
     setCurrentView('none');
-    
+
     // Show toast notification for data errors
     addToast({
       title: 'Data Loading Error',
@@ -82,10 +83,10 @@ function App() {
   const handleValidationErrors = useCallback((errors: ValidationError[]) => {
     // Show detailed validation errors in toast
     const errorCount = errors.length;
-    const summary = errorCount === 1 
+    const summary = errorCount === 1
       ? `Validation error in ${errors[0].field}: ${errors[0].message}`
       : `Found ${errorCount} validation errors. Please check your data format.`;
-    
+
     addToast({
       title: 'Data Validation Failed',
       message: summary,
@@ -99,15 +100,15 @@ function App() {
     setWordCloudConfig(config);
   }, []);
 
-  // Generate Word Cloud PDF with performance monitoring and error handling
-  const handleGenerateWordCloud = useCallback(async (config: WordCloudConfig) => {
+  // Generate Word Cloud Preview with performance monitoring and error handling
+  const handleGenerateWordCloudPreview = useCallback(async (config: WordCloudConfig) => {
     setWordCloudConfig(config);
     if (appState.data.length === 0) return;
 
-    setIsGeneratingPDF(true);
+    setIsGeneratingPreview(true);
     setAppState(prev => ({ ...prev, error: null }));
 
-    const timer = performanceService.createTimer('Word Cloud Generation');
+    const timer = performanceService.createTimer('Word Cloud Preview Generation');
 
     try {
       // Monitor memory before starting
@@ -115,7 +116,7 @@ function App() {
 
       // Extract words from data
       const words = appState.data.map(item => item.word);
-      
+
       // Preload fonts for word cloud with retry mechanism
       const fonts = await errorService.withRetry(
         () => fontService.preloadFontsForWordCloud(words.length),
@@ -123,7 +124,7 @@ function App() {
         1000,
         'Font Preloading for Word Cloud'
       );
-      
+
       setAppState(prev => ({ ...prev, fonts }));
 
       // Show success toast for font loading
@@ -136,88 +137,160 @@ function App() {
         });
       }
 
-      // Generate word cloud layout (this will be handled by WordCloudGenerator)
-      // For now, we'll create a simple layout
-      const wordCloudItems: WordCloudItem[] = words.map((word, index) => {
-        // Generate color based on scheme
-        let color: string;
-        switch (config.colorScheme) {
-          case 'color':
-            color = `hsl(${Math.random() * 360}, 70%, 50%)`;
-            break;
-          case 'grayscale':
-            const grayValue = Math.floor(Math.random() * 128) + 64; // Gray values between 64-192
-            color = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
-            break;
-          case 'black':
-            color = '#000000';
-            break;
-          default:
-            color = '#333333';
-        }
+      // Clear any existing word cloud items and let WordCloudGenerator handle the layout
+      setWordCloudItems([]);
 
-        return {
-          text: word,
-          size: Math.max(12, 48 - (index * 2)), // Decreasing size
-          weight: 400 + (Math.random() * 500), // Random weight between 400-900
-          fontFamily: fonts[index % fonts.length]?.family || 'Arial',
-          color,
-          x: Math.random() * 400 + 100, // Random position
-          y: Math.random() * 300 + 100,
-          rotation: Math.random() < 0.5 ? 0 : 90 // 50% chance of horizontal (0°) or vertical (90°)
-        };
+      // Use setTimeout to ensure fonts state is updated before showing the word cloud
+      setTimeout(() => {
+        setCurrentView('wordcloud');
+      }, 100);
+
+      // Show success toast - but note that layout is still being generated
+      addToast({
+        title: 'Word Cloud Preview Loading',
+        message: `Generating layout for ${words.length} words...`,
+        type: 'info',
+        duration: 3000
       });
 
-      setWordCloudItems(wordCloudItems);
-      setCurrentView('wordcloud');
+    } catch (error) {
+      console.error('Word Cloud preview generation failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      setAppState(prev => ({
+        ...prev,
+        error: `Word Cloud preview generation failed: ${errorMessage}`
+      }));
+
+      // Handle error through error service
+      errorService.handlePDFGenerationError('wordcloud', error instanceof Error ? error : new Error(String(error)));
+
+    } finally {
+      timer.stop();
+      setIsGeneratingPreview(false);
+    }
+  }, [appState.data, fontService, performanceService, errorService, addToast]);
+
+  // Download Word Cloud PDF
+  const handleDownloadWordCloudPDF = useCallback(async () => {
+    if (wordCloudItems.length === 0) {
+      addToast({
+        title: 'No Word Cloud Ready',
+        message: 'Please generate a word cloud preview first.',
+        type: 'error',
+        duration: 3000
+      });
+      return;
+    }
+
+    // Validate that wordCloudItems have proper positions
+    const itemsWithPositions = wordCloudItems.filter(item => item.x !== undefined && item.y !== undefined);
+
+    if (itemsWithPositions.length === 0) {
+      addToast({
+        title: 'Word Cloud Not Ready',
+        message: 'Word cloud layout is still being generated. Please wait a moment and try again.',
+        type: 'warning',
+        duration: 4000
+      });
+      return;
+    }
+
+    setIsDownloadingPDF(true);
+    setAppState(prev => ({ ...prev, error: null }));
+
+    const timer = performanceService.createTimer('Word Cloud PDF Download');
+
+    try {
+      // Debug: Log the items being sent to PDF generation
+      console.log('Generating PDF with config:', wordCloudConfig);
+      console.log('Items for PDF generation:', wordCloudItems);
 
       // Generate PDF with retry mechanism
       const pdfBlob = await errorService.withRetry(
-        () => pdfService.generateWordCloudPDF(wordCloudItems, config),
+        () => pdfService.generateWordCloudPDF(wordCloudItems, wordCloudConfig),
         2,
         2000,
         'Word Cloud PDF Generation'
       );
-      
+
+      console.log('Generated PDF blob size:', pdfBlob.size);
+
       // Download PDF
-      const filename = `word-cloud-${config.paperSize}-${config.orientation}-${new Date().toISOString().split('T')[0]}`;
+      const filename = `word-cloud-${wordCloudConfig.paperSize}-${wordCloudConfig.orientation}-${wordCloudConfig.colorScheme}-${new Date().toISOString().split('T')[0]}`;
       pdfService.downloadPDF(pdfBlob, filename);
 
       // Show success toast
       addToast({
-        title: 'Word Cloud Generated',
-        message: `Successfully generated ${config.paperSize} ${config.orientation} Word Cloud PDF`,
+        title: 'Word Cloud Downloaded',
+        message: `Successfully downloaded ${wordCloudConfig.paperSize} ${wordCloudConfig.orientation} Word Cloud PDF`,
         type: 'success',
         duration: 5000
       });
 
     } catch (error) {
-      console.error('Word Cloud generation failed:', error);
+      console.error('Word Cloud PDF download failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       setAppState(prev => ({
         ...prev,
-        error: `Word Cloud generation failed: ${errorMessage}`
+        error: `Word Cloud PDF download failed: ${errorMessage}`
       }));
-      
+
       // Handle error through error service
       errorService.handlePDFGenerationError('wordcloud', error instanceof Error ? error : new Error(String(error)));
-      
+
     } finally {
       timer.stop();
-      setIsGeneratingPDF(false);
+      setIsDownloadingPDF(false);
     }
-  }, [appState.data, fontService, pdfService, performanceService, errorService, addToast]);
+  }, [wordCloudItems, wordCloudConfig, pdfService, performanceService, errorService, addToast]);
 
-  // Generate Dossier PDF with performance monitoring and error handling
-  const handleGenerateDossier = useCallback(async () => {
+  // Generate Dossier Preview with performance monitoring and error handling
+  const handleGenerateDossierPreview = useCallback(async () => {
     if (appState.data.length === 0) return;
 
-    setIsGeneratingPDF(true);
+    setIsGeneratingPreview(true);
     setAppState(prev => ({ ...prev, error: null }));
     setCurrentView('dossier');
 
-    const timer = performanceService.createTimer('Dossier Generation');
+    const timer = performanceService.createTimer('Dossier Preview Generation');
+
+    try {
+      // Monitor memory before starting
+      performanceService.monitorMemoryUsage();
+
+      // Show success toast
+      addToast({
+        title: 'Dossier Preview Ready',
+        message: `Preview generated with ${appState.data.length} entries. Ready for download!`,
+        type: 'success',
+        duration: 3000
+      });
+
+    } catch (error) {
+      console.error('Dossier preview generation failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      setAppState(prev => ({
+        ...prev,
+        error: `Dossier preview generation failed: ${errorMessage}`
+      }));
+
+    } finally {
+      timer.stop();
+      setIsGeneratingPreview(false);
+    }
+  }, [appState.data, performanceService, addToast]);
+
+  // Download Dossier PDF
+  const handleDownloadDossierPDF = useCallback(async () => {
+    if (appState.data.length === 0) return;
+
+    setIsDownloadingPDF(true);
+    setAppState(prev => ({ ...prev, error: null }));
+
+    const timer = performanceService.createTimer('Dossier PDF Download');
 
     try {
       // Monitor memory before starting
@@ -230,36 +303,48 @@ function App() {
         2000,
         'Dossier PDF Generation'
       );
-      
+
       // Download PDF
       const filename = `dossier-${new Date().toISOString().split('T')[0]}`;
       pdfService.downloadPDF(pdfBlob, filename);
 
       // Show success toast
       addToast({
-        title: 'Dossier Generated',
-        message: `Successfully generated dossier PDF with ${appState.data.length} entries`,
+        title: 'Dossier Downloaded',
+        message: `Successfully downloaded dossier PDF with ${appState.data.length} entries`,
         type: 'success',
         duration: 5000
       });
 
     } catch (error) {
-      console.error('Dossier generation failed:', error);
+      console.error('Dossier PDF download failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       setAppState(prev => ({
         ...prev,
-        error: `Dossier generation failed: ${errorMessage}`
+        error: `Dossier PDF download failed: ${errorMessage}`
       }));
-      
+
       // Handle error through error service
       errorService.handlePDFGenerationError('dossier', error instanceof Error ? error : new Error(String(error)));
-      
+
     } finally {
       timer.stop();
-      setIsGeneratingPDF(false);
+      setIsDownloadingPDF(false);
     }
   }, [appState.data, appState.images, pdfService, performanceService, errorService, addToast]);
+
+  // Handle word cloud items generated by WordCloudGenerator
+  const handleWordsGenerated = useCallback((items: WordCloudItem[]) => {
+    setWordCloudItems(items);
+    // Show success toast when layout is actually ready
+    addToast({
+      title: 'Word Cloud Ready',
+      message: `Word cloud with ${items.length} words is ready for download!`,
+      type: 'success',
+      duration: 3000
+    });
+  }, [addToast]);
 
   // Clear error message
   const clearError = useCallback(() => {
@@ -320,29 +405,35 @@ function App() {
             {/* Document Controls */}
             <DocumentControls
               data={appState.data}
-              onGenerateWordCloud={handleGenerateWordCloud}
-              onGenerateDossier={handleGenerateDossier}
-              isGenerating={isGeneratingPDF}
+              onGenerateWordCloudPreview={handleGenerateWordCloudPreview}
+              onGenerateDossierPreview={handleGenerateDossierPreview}
+              onDownloadWordCloudPDF={handleDownloadWordCloudPDF}
+              onDownloadDossierPDF={handleDownloadDossierPDF}
+              isGeneratingPreview={isGeneratingPreview}
+              isDownloadingPDF={isDownloadingPDF}
               disabled={appState.isLoading}
               onConfigChange={handleWordCloudConfigChange}
+              currentView={currentView}
             />
 
             {/* Loading State */}
-            {(appState.isLoading || isGeneratingPDF) && (
+            {(appState.isLoading || isGeneratingPreview || isDownloadingPDF) && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-blue-800">
-                      {appState.isLoading ? 'Loading data...' : 'Generating PDF...'}
+                      {appState.isLoading ? 'Loading data...' :
+                        isGeneratingPreview ? 'Generating preview...' :
+                          'Downloading PDF...'}
                     </p>
                     <p className="text-sm text-blue-600">
-                      {isGeneratingPDF ? 'This may take a few moments.' : 'Please wait.'}
+                      {isDownloadingPDF ? 'Creating PDF file...' : 'Please wait.'}
                     </p>
                   </div>
                 </div>
@@ -358,9 +449,10 @@ function App() {
               currentView={currentView}
               wordCloudConfig={wordCloudConfig}
               fonts={appState.fonts}
-              isGenerating={isGeneratingPDF}
-              onWordsGenerated={setWordCloudItems}
+              isGenerating={isGeneratingPreview}
+              onWordsGenerated={handleWordsGenerated}
             />
+
           </div>
         </div>
 

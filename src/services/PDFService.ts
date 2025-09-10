@@ -63,8 +63,29 @@ export class PDFService {
     const timer = this.performanceService.createTimer('Word Cloud PDF Generation');
     
     try {
+      // Validate input parameters
+      
       // Monitor memory usage
       this.performanceService.monitorMemoryUsage();
+
+      // Validate items have positions
+      const itemsWithPositions = items.filter(item => 
+        item.x !== undefined && item.y !== undefined && 
+        typeof item.x === 'number' && typeof item.y === 'number'
+      );
+      
+
+      
+      if (itemsWithPositions.length === 0) {
+        throw new Error('No word cloud items have valid positions');
+      }
+      
+      // Use only items with valid positions
+      items = itemsWithPositions;
+      
+      // Scale items to fit PDF page
+      items = this.scaleWordCloudForPDF(items, config);
+
 
       // Validate and optimize items for performance
       if (items.length > 200) {

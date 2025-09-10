@@ -47,7 +47,7 @@ export const WordCloudGenerator: React.FC<WordCloudGeneratorProps> = ({
     const wordFrequency = calculateWordFrequency(data);
     const items = generateWordCloudItems(wordFrequency, fonts);
     const layoutResult = generateWordCloudLayout(items, config);
-
+    
     if (onWordsGenerated) {
       onWordsGenerated(layoutResult.words);
     }
@@ -58,7 +58,7 @@ export const WordCloudGenerator: React.FC<WordCloudGeneratorProps> = ({
     }, 100);
 
     return layoutResult;
-  }, [data, config, fonts, onWordsGenerated, onPreviewReady]);
+  }, [data, config, fonts, onPreviewReady]);
 
   if (data.length === 0) {
     return (
@@ -184,7 +184,9 @@ export function generateWordCloudItems(
   fonts: GoogleFont[]
 ): WordCloudItem[] {
   if (fonts.length === 0) {
-    throw new Error('No fonts available for word cloud generation');
+    console.warn('No fonts available for word cloud generation, using fallback');
+    // Use fallback fonts instead of throwing error
+    fonts = [{ family: 'Helvetica', weights: [400, 700] }];
   }
 
   const words = Array.from(wordFrequency.entries());

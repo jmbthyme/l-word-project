@@ -3,11 +3,15 @@ import type { PersonData, WordCloudConfig } from '../types';
 
 export interface DocumentControlsProps {
   data: PersonData[];
-  onGenerateWordCloud: (config: WordCloudConfig) => void;
-  onGenerateDossier: () => void;
-  isGenerating?: boolean;
+  onGenerateWordCloudPreview: (config: WordCloudConfig) => void;
+  onGenerateDossierPreview: () => void;
+  onDownloadWordCloudPDF?: () => void;
+  onDownloadDossierPDF?: () => void;
+  isGeneratingPreview?: boolean;
+  isDownloadingPDF?: boolean;
   disabled?: boolean;
   onConfigChange?: (config: WordCloudConfig) => void;
+  currentView: 'none' | 'wordcloud' | 'dossier';
 }
 
 /**
@@ -16,11 +20,15 @@ export interface DocumentControlsProps {
  */
 export const DocumentControls: React.FC<DocumentControlsProps> = ({
   data,
-  onGenerateWordCloud,
-  onGenerateDossier,
-  isGenerating = false,
+  onGenerateWordCloudPreview,
+  onGenerateDossierPreview,
+  onDownloadWordCloudPDF,
+  onDownloadDossierPDF,
+  isGeneratingPreview = false,
+  isDownloadingPDF = false,
   disabled = false,
-  onConfigChange
+  onConfigChange,
+  currentView
 }) => {
   const [wordCloudConfig, setWordCloudConfig] = useState<WordCloudConfig>({
     paperSize: 'A4',
@@ -46,19 +54,31 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
     onConfigChange?.(newConfig);
   };
 
-  const handleGenerateWordCloud = () => {
-    if (!disabled && !isGenerating && data.length > 0) {
-      onGenerateWordCloud(wordCloudConfig);
+  const handleGenerateWordCloudPreview = () => {
+    if (!disabled && !isGeneratingPreview && data.length > 0) {
+      onGenerateWordCloudPreview(wordCloudConfig);
     }
   };
 
-  const handleGenerateDossier = () => {
-    if (!disabled && !isGenerating && data.length > 0) {
-      onGenerateDossier();
+  const handleGenerateDossierPreview = () => {
+    if (!disabled && !isGeneratingPreview && data.length > 0) {
+      onGenerateDossierPreview();
     }
   };
 
-  const isDisabled = disabled || isGenerating || data.length === 0;
+  const handleDownloadWordCloudPDF = () => {
+    if (onDownloadWordCloudPDF && !isDownloadingPDF) {
+      onDownloadWordCloudPDF();
+    }
+  };
+
+  const handleDownloadDossierPDF = () => {
+    if (onDownloadDossierPDF && !isDownloadingPDF) {
+      onDownloadDossierPDF();
+    }
+  };
+
+  const isDisabled = disabled || isGeneratingPreview || data.length === 0;
 
   return (
     <div className="document-controls bg-white rounded-lg shadow-md p-6 space-y-6">
@@ -67,7 +87,7 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
           Document Generation
         </h2>
         <p className="text-sm text-gray-600">
-          {data.length === 0 
+          {data.length === 0
             ? 'Load data to enable document generation'
             : `Ready to generate documents from ${data.length} items`
           }
@@ -95,11 +115,10 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               type="button"
               onClick={() => handlePaperSizeChange('A4')}
               disabled={isDisabled}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                wordCloudConfig.paperSize === 'A4'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${wordCloudConfig.paperSize === 'A4'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               A4 (8.3" × 11.7")
             </button>
@@ -107,11 +126,10 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               type="button"
               onClick={() => handlePaperSizeChange('A3')}
               disabled={isDisabled}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                wordCloudConfig.paperSize === 'A3'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${wordCloudConfig.paperSize === 'A3'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               A3 (11.7" × 16.5")
             </button>
@@ -128,11 +146,10 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               type="button"
               onClick={() => handleOrientationChange('portrait')}
               disabled={isDisabled}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                wordCloudConfig.orientation === 'portrait'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${wordCloudConfig.orientation === 'portrait'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               Portrait
             </button>
@@ -140,11 +157,10 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
               type="button"
               onClick={() => handleOrientationChange('landscape')}
               disabled={isDisabled}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                wordCloudConfig.orientation === 'landscape'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${wordCloudConfig.orientation === 'landscape'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               Landscape
             </button>
@@ -209,43 +225,71 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
         <div className="config-summary bg-gray-50 rounded-md p-3">
           <p className="text-sm text-gray-600">
             <span className="font-medium">Selected:</span> {wordCloudConfig.paperSize} {wordCloudConfig.orientation}, {wordCloudConfig.colorScheme}
-            {wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'landscape' && 
+            {wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'landscape' &&
               ' (11.7" × 8.3")'
             }
-            {wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'portrait' && 
+            {wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'portrait' &&
               ' (8.3" × 11.7")'
             }
-            {wordCloudConfig.paperSize === 'A3' && wordCloudConfig.orientation === 'landscape' && 
+            {wordCloudConfig.paperSize === 'A3' && wordCloudConfig.orientation === 'landscape' &&
               ' (16.5" × 11.7")'
             }
-            {wordCloudConfig.paperSize === 'A3' && wordCloudConfig.orientation === 'portrait' && 
+            {wordCloudConfig.paperSize === 'A3' && wordCloudConfig.orientation === 'portrait' &&
               ' (11.7" × 16.5")'
             }
           </p>
         </div>
 
-        {/* Generate Word Cloud Button */}
+        {/* Generate Word Cloud Preview Button */}
         <button
-          onClick={handleGenerateWordCloud}
+          onClick={handleGenerateWordCloudPreview}
           disabled={isDisabled}
-          className={`w-full py-3 px-4 rounded-md text-sm font-medium transition-colors ${
-            isDisabled
+          className={`w-full py-3 px-4 rounded-md text-sm font-medium transition-colors ${isDisabled
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-          }`}
+            }`}
         >
-          {isGenerating ? (
+          {isGeneratingPreview ? (
             <span className="flex items-center justify-center">
               <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Generating Word Cloud PDF...
+              Generating Preview...
             </span>
           ) : (
-            'Generate Word Cloud PDF'
+            'Generate Word Cloud Preview'
           )}
         </button>
+
+        {/* Download Word Cloud PDF Button */}
+        {currentView === 'wordcloud' && onDownloadWordCloudPDF && (
+          <button
+            onClick={handleDownloadWordCloudPDF}
+            disabled={isDownloadingPDF}
+            className={`w-full py-2 px-4 rounded-md text-sm font-medium transition-colors ${isDownloadingPDF
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
+              }`}
+          >
+            {isDownloadingPDF ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Downloading PDF...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download Word Cloud PDF
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Dossier Controls */}
@@ -269,28 +313,56 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
           </p>
         </div>
 
-        {/* Generate Dossier Button */}
+        {/* Generate Dossier Preview Button */}
         <button
-          onClick={handleGenerateDossier}
+          onClick={handleGenerateDossierPreview}
           disabled={isDisabled}
-          className={`w-full py-3 px-4 rounded-md text-sm font-medium transition-colors ${
-            isDisabled
+          className={`w-full py-3 px-4 rounded-md text-sm font-medium transition-colors ${isDisabled
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
-          }`}
+            }`}
         >
-          {isGenerating ? (
+          {isGeneratingPreview ? (
             <span className="flex items-center justify-center">
               <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Generating Dossier PDF...
+              Generating Preview...
             </span>
           ) : (
-            'Generate Dossier PDF'
+            'Generate Dossier Preview'
           )}
         </button>
+
+        {/* Download Dossier PDF Button */}
+        {currentView === 'dossier' && onDownloadDossierPDF && (
+          <button
+            onClick={handleDownloadDossierPDF}
+            disabled={isDownloadingPDF}
+            className={`w-full py-2 px-4 rounded-md text-sm font-medium transition-colors ${isDownloadingPDF
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+              }`}
+          >
+            {isDownloadingPDF ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Downloading PDF...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download Dossier PDF
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Data Summary */}

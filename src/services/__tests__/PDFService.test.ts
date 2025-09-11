@@ -128,9 +128,17 @@ describe('PDFService', () => {
 
     it('should throw error when PDF generation fails', async () => {
       const { pdf } = await import('@react-pdf/renderer');
-      vi.mocked(pdf).mockImplementation(() => ({
+      const mockPdfInstance = {
+        container: {},
+        isDirty: vi.fn().mockReturnValue(false),
+        toString: vi.fn().mockReturnValue(''),
         toBlob: vi.fn().mockRejectedValue(new Error('PDF generation failed')),
-      }));
+        toBuffer: vi.fn().mockResolvedValue({}),
+        on: vi.fn(),
+        updateContainer: vi.fn(),
+        removeListener: vi.fn(),
+      };
+      vi.mocked(pdf).mockReturnValue(mockPdfInstance);
 
       await expect(pdfService.generateWordCloudPDF(mockWordCloudItems, mockConfig))
         .rejects.toThrow('Word Cloud PDF generation failed');
@@ -147,7 +155,14 @@ describe('PDFService', () => {
       // Reset the mock to ensure it works for each config
       const { pdf } = await import('@react-pdf/renderer');
       vi.mocked(pdf).mockImplementation(() => ({
+        container: {},
+        isDirty: vi.fn().mockReturnValue(false),
+        toString: vi.fn().mockReturnValue(''),
         toBlob: vi.fn().mockResolvedValue(new Blob(['mock pdf'], { type: 'application/pdf' })),
+        toBuffer: vi.fn().mockResolvedValue({}),
+        on: vi.fn(),
+        updateContainer: vi.fn(),
+        removeListener: vi.fn(),
       }));
 
       for (const config of configs) {

@@ -70,14 +70,14 @@ describe('Performance Benchmarks', () => {
         height: 600,
       };
 
-      Object.defineProperty(global, 'document', {
+      Object.defineProperty(globalThis, 'document', {
         value: {
           createElement: vi.fn(() => mockCanvas),
         },
         writable: true,
       });
 
-      Object.defineProperty(global, 'Image', {
+      Object.defineProperty(globalThis, 'Image', {
         value: vi.fn(() => mockImage),
         writable: true,
       });
@@ -128,14 +128,14 @@ describe('Performance Benchmarks', () => {
         height: 300,
       };
 
-      Object.defineProperty(global, 'document', {
+      Object.defineProperty(globalThis, 'document', {
         value: {
           createElement: vi.fn(() => mockCanvas),
         },
         writable: true,
       });
 
-      Object.defineProperty(global, 'Image', {
+      Object.defineProperty(globalThis, 'Image', {
         value: vi.fn(() => mockImage),
         writable: true,
       });

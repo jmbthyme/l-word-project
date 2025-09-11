@@ -360,37 +360,6 @@ export class PDFService {
   }
 
   /**
-   * Generate PDF with retry mechanism for better reliability
-   * @param DocumentComponent React component for PDF
-   * @param type Type of document for error reporting
-   * @returns Promise resolving to PDF Blob
-   */
-  private async _generatePDFWithRetry(
-    DocumentComponent: () => React.ReactElement,
-    _type: string,
-    maxRetries: number = 2
-  ): Promise<Blob> {
-    let lastError: Error | null = null;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const blob = await pdf(React.createElement(DocumentComponent)).toBlob();
-        return blob;
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        console.warn(`PDF generation attempt ${attempt} failed:`, lastError.message);
-
-        if (attempt < maxRetries) {
-          // Wait before retry
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        }
-      }
-    }
-
-    throw lastError || new Error(`PDF generation failed after ${maxRetries} attempts`);
-  }
-
-  /**
    * Download PDF blob as file
    * @param blob PDF Blob
    * @param filename Desired filename
@@ -437,48 +406,7 @@ export class PDFService {
 
     return { width, height };
   }
-
-  /**
-   * Map Google Font names to safe PDF font names
-   * @param fontFamily Original font family name
-   * @param weight Font weight
-   * @returns Safe font family name for PDF
-   */
-  private _mapToSafeFont(fontFamily: string, weight: number): string {
-    const fontMappings: Record<string, string> = {
-      'Inter': 'Helvetica',
-      'Roboto': 'Helvetica',
-      'Open Sans': 'Helvetica',
-      'Lato': 'Helvetica',
-      'Montserrat': 'Helvetica',
-      'Poppins': 'Helvetica',
-      'Source Sans Pro': 'Helvetica',
-      'Oswald': 'Helvetica',
-      'Raleway': 'Helvetica',
-      'Ubuntu': 'Helvetica',
-      'Playfair Display': 'Times-Roman',
-      'Merriweather': 'Times-Roman',
-      'Crimson Text': 'Times-Roman',
-      'Libre Baskerville': 'Times-Roman',
-      'Nunito': 'Helvetica',
-      'Work Sans': 'Helvetica',
-      'Fira Sans': 'Helvetica',
-      'PT Sans': 'Helvetica'
-    };
-
-    let baseFont = fontMappings[fontFamily] || 'Helvetica';
-
-    // Apply weight variations for supported fonts
-    if (weight >= 700) {
-      if (baseFont === 'Helvetica') return 'Helvetica-Bold';
-      if (baseFont === 'Times-Roman') return 'Times-Bold';
-      if (baseFont === 'Courier') return 'Courier-Bold';
-    }
-
-    console.log(`Mapping font "${fontFamily}" (weight: ${weight}) to "${baseFont}"`);
-    return baseFont;
-  }
-
+  
   /**
    * Convert pixel coordinates to PDF points
    * @param pixels Pixel value

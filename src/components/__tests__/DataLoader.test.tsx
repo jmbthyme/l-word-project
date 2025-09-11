@@ -2,7 +2,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DataLoader } from '../DataLoader';
-import type { PersonData, ValidationError } from '../../types';
+import type { PersonData } from '../../types';
 
 // Mock services
 vi.mock('../../services/PerformanceService');
@@ -25,7 +25,6 @@ Object.defineProperty(globalThis, 'FileReader', {
 describe('DataLoader - Core Functionality', () => {
   const mockOnDataLoad = vi.fn();
   const mockOnError = vi.fn();
-  const mockOnValidationErrors = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -374,23 +373,13 @@ describe('DataLoader - Error Handling', () => {
   });
 
   it('shows validation error details in UI', async () => {
-    const { rerender } = render(
+    render(
       <DataLoader
         onDataLoad={mockOnDataLoad}
         onError={mockOnError}
         onValidationErrors={mockOnValidationErrors}
       />
     );
-
-    // Simulate validation errors by re-rendering with errors
-    const validationErrors: ValidationError[] = [
-      { field: 'person', message: 'Person name is required' },
-      { field: 'word', message: 'Word is required' }
-    ];
-
-    // We need to trigger the validation errors state somehow
-    // This would typically happen through the validation process
-    // For now, let's test the UI rendering of validation errors
     
     expect(screen.queryByText('Data Validation Errors')).not.toBeInTheDocument();
   });

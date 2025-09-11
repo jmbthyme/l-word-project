@@ -73,17 +73,17 @@ describe('WordCloudGenerator - Enhanced Features', () => {
 
     it('should maintain correct aspect ratio for different configurations', () => {
       const configs = [
-        { paperSize: 'A4' as const, orientation: 'portrait' as const, aspectRatio: '8.3/11.7' },
-        { paperSize: 'A4' as const, orientation: 'landscape' as const, aspectRatio: '11.7/8.3' },
-        { paperSize: 'A3' as const, orientation: 'portrait' as const, aspectRatio: '11.7/16.5' },
-        { paperSize: 'A3' as const, orientation: 'landscape' as const, aspectRatio: '16.5/11.7' },
+        { paperSize: 'A4' as const, orientation: 'portrait' as const, colorScheme: 'color' as const, dpi: 300 as const, aspectRatio: '8.3/11.7' },
+        { paperSize: 'A4' as const, orientation: 'landscape' as const, colorScheme: 'color' as const, dpi: 300 as const, aspectRatio: '11.7/8.3' },
+        { paperSize: 'A3' as const, orientation: 'portrait' as const, colorScheme: 'color' as const, dpi: 300 as const, aspectRatio: '11.7/16.5' },
+        { paperSize: 'A3' as const, orientation: 'landscape' as const, colorScheme: 'color' as const, dpi: 300 as const, aspectRatio: '16.5/11.7' },
       ];
 
-      configs.forEach(({ paperSize, orientation, aspectRatio }) => {
+      configs.forEach(({ paperSize, orientation, colorScheme, dpi, aspectRatio }) => {
         const { unmount } = render(
           <WordCloudGenerator
             data={mockData}
-            config={{ paperSize, orientation }}
+            config={{ paperSize, orientation, colorScheme, dpi }}
             fonts={mockFonts}
             onWordsGenerated={mockOnWordsGenerated}
             onPreviewReady={mockOnPreviewReady}
@@ -102,7 +102,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={[]}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -117,7 +117,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={[]}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -132,7 +132,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -147,7 +147,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -161,7 +161,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -176,7 +176,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -194,7 +194,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -210,7 +210,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -238,7 +238,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={[]}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={[]}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -255,7 +255,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData} // Innovation appears twice, Leadership once
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -284,7 +284,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -309,7 +309,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -346,7 +346,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={largeData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -371,7 +371,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       const { rerender } = render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -384,7 +384,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       rerender(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -401,7 +401,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -417,7 +417,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={mockData}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}
@@ -433,7 +433,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
       render(
         <WordCloudGenerator
           data={[]}
-          config={{ paperSize: 'A4', orientation: 'landscape' }}
+          config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
           fonts={mockFonts}
           onWordsGenerated={mockOnWordsGenerated}
           onPreviewReady={mockOnPreviewReady}

@@ -106,7 +106,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError, onV
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Load Data Folder</h2>
+      <h2 className="text-xl font-semibold mb-4">Load Data</h2>
 
       <div className="space-y-4">
         {/* Folder Selection */}

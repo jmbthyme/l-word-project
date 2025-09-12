@@ -61,7 +61,8 @@ describe('PreviewPanel', () => {
     paperSize: 'A4',
     orientation: 'landscape',
     colorScheme: 'color',
-    dpi: 300
+    dpi: 300,
+    padding: 0
   };
 
   const mockOnWordsGenerated = vi.fn();
@@ -191,7 +192,8 @@ describe('PreviewPanel', () => {
         paperSize: 'A3',
         orientation: 'portrait',
         colorScheme: 'color',
-        dpi: 300
+        dpi: 300,
+        padding: 0
       };
 
       rerender(

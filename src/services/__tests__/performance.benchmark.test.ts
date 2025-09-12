@@ -173,6 +173,7 @@ describe('Performance Benchmarks', () => {
         orientation: 'landscape',
         colorScheme: 'color',
         dpi: 300,
+        padding: 0
       };
 
       const startTime = performance.now();

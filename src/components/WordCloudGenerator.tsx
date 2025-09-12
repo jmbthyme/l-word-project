@@ -112,22 +112,25 @@ export const WordCloudGenerator: React.FC<WordCloudGeneratorProps> = ({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p className="text-sm text-blue-600 font-medium">Generating PDF...</p>
+            <p className="text-sm text-blue-600 font-medium">Generating image...</p>
           </div>
         </div>
       )}
 
-      <svg
-        width="100%"
-        height="100%"
-        viewBox={`${wordCloudItems.bounds.minX} ${wordCloudItems.bounds.minY} ${wordCloudItems.bounds.width} ${wordCloudItems.bounds.height}`}
-        className={`word-cloud-svg ${isGenerating ? 'opacity-50' : ''}`}
-        style={{
-          aspectRatio: config.orientation === 'landscape'
-            ? config.paperSize === 'A4' ? '11.7/8.3' : '16.5/11.7'
-            : config.paperSize === 'A4' ? '8.3/11.7' : '11.7/16.5'
-        }}
-      >
+        <svg
+          width="100%"
+          height="100%"
+          viewBox={`${wordCloudItems.bounds.minX - (config.padding ?? 0)} 
+                  ${wordCloudItems.bounds.minY - (config.padding ?? 0)} 
+                  ${wordCloudItems.bounds.width + (2 * (config.padding ?? 0))} 
+                  ${wordCloudItems.bounds.height + (2 * (config.padding ?? 0))}`}
+          className={`word-cloud-svg ${isGenerating ? 'opacity-50' : ''}`}
+          style={{
+            aspectRatio: config.orientation === 'landscape'
+              ? config.paperSize === 'A4' ? '11.7/8.3' : '16.5/11.7'
+              : config.paperSize === 'A4' ? '8.3/11.7' : '11.7/16.5'
+          }}
+        >
         {wordCloudItems.words.map((word, index) => (
           <text
             key={`${word.text}-${index}`}
@@ -244,6 +247,9 @@ export function generateWordCloudLayout(
 
   // Calculate canvas dimensions based on config
   const canvasDimensions = getCanvasDimensions(config);
+  const padding = config.padding ?? 0;
+
+  // Calculate center points
   const centerX = canvasDimensions.width / 2;
   const centerY = canvasDimensions.height / 2;
 
@@ -253,16 +259,23 @@ export function generateWordCloudLayout(
 
   // Place each word using spiral positioning with collision detection
   for (const item of sortedItems) {
-    const position = findOptimalPosition(item, positionedWords, centerX, centerY, canvasDimensions);
-
-    const positionedWord: WordCloudItem = {
-      ...item,
-      x: position.x,
-      y: position.y,
-      color: getColorForScheme(config.colorScheme)
-    };
-
-    positionedWords.push(positionedWord);
+    const position = findOptimalPosition(
+      item,
+      positionedWords,
+      centerX,
+      centerY,
+      canvasDimensions,
+      padding
+    );
+    
+    if (position) {
+      positionedWords.push({
+        ...item,
+        x: position.x,
+        y: position.y,
+        color: getColorForScheme(config.colorScheme)
+      });
+    }
   }
 
   // Calculate bounds of the final layout
@@ -331,6 +344,7 @@ function getCanvasDimensions(config: WordCloudConfig): { width: number; height: 
  * @param centerX Center X coordinate
  * @param centerY Center Y coordinate
  * @param canvasDimensions Canvas dimensions
+ * @param padding Padding
  * @returns Position object with x and y coordinates
  */
 function findOptimalPosition(
@@ -338,40 +352,35 @@ function findOptimalPosition(
   existingWords: WordCloudItem[],
   centerX: number,
   centerY: number,
-  canvasDimensions: { width: number; height: number }
-): { x: number; y: number } {
+  canvasDimensions: { width: number; height: number },
+  padding: number
+): { x: number; y: number } | null {
   const wordBounds = getTextBounds(word);
 
   // Try center position first
   if (!hasCollision(word, centerX, centerY, existingWords) &&
-    isWithinBounds(centerX, centerY, wordBounds, canvasDimensions)) {
+    isWithinBounds(centerX, centerY, wordBounds, canvasDimensions, padding)) {
     return { x: centerX, y: centerY };
   }
 
   // Use spiral search to find optimal position
   const maxRadius = Math.max(canvasDimensions.width, canvasDimensions.height) / 2;
-  // const angleStep = Math.PI / 8; // 22.5 degrees
   const radiusStep = 10;
+  const angleStep = Math.PI / 8;
 
   for (let radius = radiusStep; radius <= maxRadius; radius += radiusStep) {
-    const angleSteps = Math.max(8, Math.floor(2 * Math.PI * radius / 50)); // More angles for larger radii
-    const currentAngleStep = (2 * Math.PI) / angleSteps;
-
-    for (let i = 0; i < angleSteps; i++) {
-      const angle = i * currentAngleStep;
+    for (let angle = 0; angle < 2 * Math.PI; angle += angleStep) {
       const x = centerX + radius * Math.cos(angle);
       const y = centerY + radius * Math.sin(angle);
 
-      if (isWithinBounds(x, y, wordBounds, canvasDimensions) &&
-        !hasCollision(word, x, y, existingWords)) {
+      if (!hasCollision(word, x, y, existingWords) &&
+        isWithinBounds(x, y, wordBounds, canvasDimensions, padding)) {
         return { x, y };
       }
     }
   }
 
-  // Fallback: place at center even if there's collision
-  console.warn(`Could not find collision-free position for word: ${word.text}`);
-  return { x: centerX, y: centerY };
+  return null;
 }
 
 /**
@@ -423,21 +432,24 @@ function hasCollision(
  * @param y Y coordinate
  * @param wordBounds Word dimensions
  * @param canvasDimensions Canvas dimensions
+ * @param padding Padding
  * @returns Boolean indicating if position is valid
  */
 function isWithinBounds(
   x: number,
   y: number,
   wordBounds: { width: number; height: number },
-  canvasDimensions: { width: number; height: number }
+  canvasDimensions: { width: number; height: number },
+  padding: number
 ): boolean {
-  const margin = 20; // Margin from canvas edges
+  const halfWidth = wordBounds.width / 2;
+  const halfHeight = wordBounds.height / 2;
 
   return (
-    x - wordBounds.width / 2 >= margin &&
-    x + wordBounds.width / 2 <= canvasDimensions.width - margin &&
-    y - wordBounds.height / 2 >= margin &&
-    y + wordBounds.height / 2 <= canvasDimensions.height - margin
+    x - halfWidth >= padding &&
+    x + halfWidth <= canvasDimensions.width - padding &&
+    y - halfHeight >= padding &&
+    y + halfHeight <= canvasDimensions.height - padding
   );
 }
 

@@ -36,7 +36,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
     paperSize: 'A4' as const,
     orientation: 'landscape' as const,
     colorScheme: 'color' as const,
-    dpi: 300 as const
+    dpi: 300 as const,
+    padding: 0 as const
   });
 
   const handlePaperSizeChange = (paperSize: 'A4' | 'A3') => {
@@ -59,6 +60,12 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
 
   const handleDPIChange = (dpi: 300 | 600) => {
     const newConfig = { ...wordCloudConfig, dpi };
+    setWordCloudConfig(newConfig);
+    onConfigChange?.(newConfig);
+  };
+
+  const handlePaddingChange = (padding: number) => {
+    const newConfig = { ...wordCloudConfig, padding };
     setWordCloudConfig(newConfig);
     onConfigChange?.(newConfig);
   };
@@ -97,8 +104,8 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
         </h2>
         <p className="text-sm text-gray-600">
           {data.length === 0
-            ? 'Load data to enable document creation'
-            : `Ready to create image and document from ${data.length} items`
+            ? 'Load data to enable Word Cloud image and Dossier document creation'
+            : `Ready to create Word Cloud image and Dossier document from ${data.length} items`
           }
         </p>
       </div>
@@ -115,7 +122,9 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
             aria-expanded={accordionOpen === 'wordcloud'}
             aria-controls="wordcloud-panel"
           >
-            <span>Word Cloud Image</span>
+            <h3 className="text-lg font-medium text-gray-700">
+              Word Cloud Image
+            </h3>
             <svg
               className={`w-5 h-5 transition-transform ${accordionOpen === 'wordcloud' ? 'rotate-180' : ''}`}
               fill="none"
@@ -128,13 +137,10 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
           {accordionOpen === 'wordcloud' && (
             <div id="wordcloud-panel" className="p-4">
               {/* Word Cloud Controls */}
-              <div className="word-cloud-controls border rounded-lg p-4 space-y-4">
+              <div className="word-cloud-controls space-y-4">
                 <div className="section-header">
-                  <h3 className="text-lg font-medium text-gray-700 mb-3">
-                    Word Cloud Image
-                  </h3>
                   <p className="text-sm text-gray-500 mb-4">
-                    Create a visual word cloud with varied fonts and sizes
+                    Create a Word Cloud image using either default settings or customize the options to suit your preferences. 
                   </p>
                 </div>
 
@@ -293,29 +299,23 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
                   </div>
                 </div>
 
-                {/* Configuration Summary */}
-                <div className="config-summary bg-gray-50 rounded-md p-3">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Selected:</span> {wordCloudConfig.paperSize} {wordCloudConfig.orientation}, {wordCloudConfig.colorScheme}, {wordCloudConfig.dpi} DPI
-                    {wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'landscape' &&
-                      ' (11.7" × 8.3")'
-                    }
-                    {wordCloudConfig.paperSize === 'A4' && wordCloudConfig.orientation === 'portrait' &&
-                      ' (8.3" × 11.7")'
-                    }
-                    {wordCloudConfig.paperSize === 'A3' && wordCloudConfig.orientation === 'landscape' &&
-                      ' (16.5" × 11.7")'
-                    }
-                    {wordCloudConfig.paperSize === 'A3' && wordCloudConfig.orientation === 'portrait' &&
-                      ' (11.7" × 16.5")'
-                    }
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {wordCloudConfig.dpi === 300 ?
-                      'Professional quality suitable for most printing needs' :
-                      'Ultra high-end quality for fine art and luxury printing'
-                    }
-                  </p>
+                {/* Padding Control */}
+                <div className="control-group">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Padding
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="500"
+                    value={wordCloudConfig.padding}
+                    onChange={(e) => handlePaddingChange(Number(e.target.value))}
+                    disabled={isDisabled}
+                    className="w-full"
+                  />
+                  <span className="text-sm text-gray-600">
+                    {wordCloudConfig.padding}px
+                  </span>
                 </div>
 
                 {/* Generate Word Cloud Preview Button */}
@@ -382,7 +382,9 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
             aria-expanded={accordionOpen === 'dossier'}
             aria-controls="dossier-panel"
           >
-            <span>Dossier Document</span>
+            <h3 className="text-lg font-medium text-gray-700">
+              Dossier Document
+            </h3>
             <svg
               className={`w-5 h-5 transition-transform ${accordionOpen === 'dossier' ? 'rotate-180' : ''}`}
               fill="none"
@@ -395,23 +397,10 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
           {accordionOpen === 'dossier' && (
             <div id="dossier-panel" className="p-4">
               {/* Dossier Controls */}
-              <div className="dossier-controls border rounded-lg p-4 space-y-4">
+              <div className="dossier-controls space-y-4">
                 <div className="section-header">
-                  <h3 className="text-lg font-medium text-gray-700 mb-3">
-                    Dossier Document
-                  </h3>
                   <p className="text-sm text-gray-500 mb-4">
-                    Create a comprehensive document with all data (A4 Portrait)
-                  </p>
-                </div>
-
-                {/* Dossier Configuration Info */}
-                <div className="config-info bg-gray-50 rounded-md p-3">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Format:</span> A4 Portrait (8.3" × 11.7")
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    <span className="font-medium">Content:</span> Person, word, description, and images
+                    Create a comprehensive document with all data. A4 Portrait (8.3" × 11.7").
                   </p>
                 </div>
 
@@ -470,25 +459,6 @@ export const DocumentControls: React.FC<DocumentControlsProps> = ({
           )}
         </div>
       </div>
-
-      {/* Data Summary */}
-      {data.length > 0 && (
-        <div className="data-summary bg-blue-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-800 mb-2">Data Summary</h4>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-blue-600 font-medium">Total Items:</span>
-              <span className="ml-2 text-blue-800">{data.length}</span>
-            </div>
-            <div>
-              <span className="text-blue-600 font-medium">Unique Words:</span>
-              <span className="ml-2 text-blue-800">
-                {new Set(data.map(item => item.word.toLowerCase())).size}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

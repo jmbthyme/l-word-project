@@ -249,6 +249,7 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError, onV
                 </h3>
                 <div className="mt-2 text-sm text-green-700">
                   <p>✓ {loadedData.length} data entries loaded</p>
+                  <p>✓ {new Set(loadedData.map(item => item.word.toLowerCase())).size} unique words loaded</p>
                   <p>✓ {loadedImages.size} images loaded</p>
                 </div>
               </div>

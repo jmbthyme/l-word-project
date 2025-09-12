@@ -37,8 +37,8 @@ describe('DocumentControls', () => {
         />
       );
 
-      expect(screen.getByText('Document Creation')).toBeInTheDocument();
-      expect(screen.getByText('Ready to create documents from 2 items')).toBeInTheDocument();
+      expect(screen.getByText('Generate Content')).toBeInTheDocument();
+      expect(screen.getByText('Ready to create image and document from 2 items')).toBeInTheDocument();
       expect(screen.getByText('Word Cloud Image')).toBeInTheDocument();
       expect(screen.getByText('Dossier Document')).toBeInTheDocument();
     });

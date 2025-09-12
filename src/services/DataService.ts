@@ -75,6 +75,56 @@ export class DataService {
   }
 
   /**
+   * Loads data and images from a sample data folder
+   * @param dataUrl
+   * @param imageNames 
+   * @param imageBaseUrl
+   * @returns Promise with loaded data, images, and validation results
+   */
+  async loadSampleDataFolder(
+    dataUrl: string,
+    imageNames: string[],
+    imageBaseUrl: string = '/sample-data/'
+  ): Promise<DataLoadResult> {
+    // Fetch JSON data
+    const dataResp = await fetch(dataUrl);
+    if (!dataResp.ok) throw new Error('Failed to fetch data from public folder');
+    const jsonData = await dataResp.json();
+    const allData: PersonData[] = this.validateJsonData(jsonData);
+
+    // Load images as base64
+    const images = new Map<string, string>();
+    const availableImageNames: string[] = [];
+    await Promise.all(imageNames.map(async (imgName) => {
+      try {
+        const imgResp = await fetch(`${imageBaseUrl}${imgName}`);
+        if (imgResp.ok) {
+          const blob = await imgResp.blob();
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject();
+            reader.readAsDataURL(blob);
+          });
+          images.set(imgName, base64);
+          availableImageNames.push(imgName);
+        }
+      } catch {
+        // Ignore missing images, will be handled in validation
+      }
+    }));
+
+    // Validate image references
+    const validation = validateImageReferences(allData, availableImageNames);
+
+    return {
+      data: allData,
+      images,
+      validation
+    };
+  }
+
+  /**
    * Validates JSON data against PersonData schema
    * @param data - Raw JSON data to validate
    * @returns Validated PersonData array

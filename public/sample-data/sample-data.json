@@ -1,0 +1,123 @@
+[
+  {
+    "person": "Paul",
+    "word": "Lorem",
+    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    "picture": "person-0.png"
+  },
+  {
+    "person": "Linda",
+    "word": "Ipsum",
+    "description": "",
+    "picture": "person-1.png"
+  },
+  {
+    "person": "John",
+    "word": "Dolor",
+    "description": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+    "picture": ""
+  },
+  {
+    "person": "Mary",
+    "word": "Sit",
+    "description": "",
+    "picture": "person-2.png"
+  },
+  {
+    "person": "James",
+    "word": "Amet",
+    "description": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+    "picture": ""
+  },
+  {
+    "person": "Patricia",
+    "word": "Consectetur",
+    "description": "",
+    "picture": "person-3.png"
+  },
+  {
+    "person": "Robert",
+    "word": "Adipiscing",
+    "description": "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+    "picture": ""
+  },
+  {
+    "person": "Barbara",
+    "word": "Elit",
+    "description": "",
+    "picture": "person-4.png"
+  },
+  {
+    "person": "Michael",
+    "word": "Sed",
+    "description": "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.",
+    "picture": ""
+  },
+  {
+    "person": "Jennifer",
+    "word": "Do",
+    "description": "",
+    "picture": "person-5.png"
+  },
+  {
+    "person": "William",
+    "word": "Eiusmod",
+    "description": "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.",
+    "picture": ""
+  },
+  {
+    "person": "Elizabeth",
+    "word": "Tempor",
+    "description": "",
+    "picture": "person-6.png"
+  },
+  {
+    "person": "David",
+    "word": "Incididunt",
+    "description": "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.",
+    "picture": ""
+  },
+  {
+    "person": "Susan",
+    "word": "Ut",
+    "description": "",
+    "picture": "person-7.png"
+  },
+  {
+    "person": "Richard",
+    "word": "Labore",
+    "description": "Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur.",
+    "picture": ""
+  },
+  {
+    "person": "Jessica",
+    "word": "Et",
+    "description": "",
+    "picture": "person-8.png"
+  },
+  {
+    "person": "Joseph",
+    "word": "Dolore",
+    "description": "Vel illum qui dolorem eum fugiat quo voluptas nulla pariatur.",
+    "picture": ""
+  },
+  {
+    "person": "Sarah",
+    "word": "Magna",
+    "description": "",
+    "picture": "person-9.png"
+  },
+  {
+    "person": "Thomas",
+    "word": "Aliqua",
+    "description": "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti.",
+    "picture": ""
+  },
+  {
+    "person": "Karen",
+    "word": "Lorem",
+    "description": "",
+    "picture": "person-0.png"
+  }
+]
+

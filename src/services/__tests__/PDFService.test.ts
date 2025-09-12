@@ -87,6 +87,7 @@ describe('PDFService', () => {
       orientation: 'landscape',
       colorScheme: 'color',
       dpi: 300,
+      padding: 0,
     };
 
     // Clear all mocks
@@ -146,10 +147,10 @@ describe('PDFService', () => {
 
     it('should handle different paper sizes and orientations', async () => {
       const configs: WordCloudConfig[] = [
-        { paperSize: 'A4', orientation: 'portrait', colorScheme: 'color', dpi: 300 },
-        { paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 },
-        { paperSize: 'A3', orientation: 'portrait', colorScheme: 'color', dpi: 300 },
-        { paperSize: 'A3', orientation: 'landscape', colorScheme: 'color', dpi: 300 },
+        { paperSize: 'A4', orientation: 'portrait', colorScheme: 'color', dpi: 300, padding: 0 },
+        { paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300, padding: 0 },
+        { paperSize: 'A3', orientation: 'portrait', colorScheme: 'color', dpi: 300, padding: 0 },
+        { paperSize: 'A3', orientation: 'landscape', colorScheme: 'color', dpi: 300, padding: 0 },
       ];
 
       // Reset the mock to ensure it works for each config

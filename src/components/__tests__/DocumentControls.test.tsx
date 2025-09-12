@@ -107,7 +107,8 @@ describe('DocumentControls', () => {
         paperSize: 'A4',
         orientation: 'landscape',
         colorScheme: 'color',
-        dpi: 300
+        dpi: 300,
+        padding: 0
       });
     });
 
@@ -181,7 +182,8 @@ describe('DocumentControls', () => {
         paperSize: 'A3',
         orientation: 'landscape',
         colorScheme: 'color',
-        dpi: 300
+        dpi: 300,
+        padding: 0
       });
     });
 
@@ -205,7 +207,8 @@ describe('DocumentControls', () => {
         paperSize: 'A4',
         orientation: 'portrait',
         colorScheme: 'color',
-        dpi: 300
+        dpi: 300,
+        padding: 0
       });
     });
   });

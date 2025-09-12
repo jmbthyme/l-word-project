@@ -31,7 +31,8 @@ function App() {
     paperSize: 'A4',
     orientation: 'landscape',
     colorScheme: 'color',
-    dpi: 300
+    dpi: 300,
+    padding: 0
   });
 
   // Services

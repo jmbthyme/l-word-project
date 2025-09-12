@@ -120,7 +120,7 @@ export const PDFGenerationExample: React.FC = () => {
             {fonts.length > 0 ? (
               <WordCloudGenerator
                 data={data}
-                config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300 }}
+                config={{ paperSize: 'A4', orientation: 'landscape', colorScheme: 'color', dpi: 300, padding: 0 }}
                 fonts={fonts}
                 onWordsGenerated={handleWordsGenerated}
               />

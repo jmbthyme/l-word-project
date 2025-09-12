@@ -91,6 +91,69 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError, onV
     }
   };
 
+  const handleSampleData = async () => {
+    setIsLoading(true);
+    setValidationWarnings([]);
+    const timer = performanceService.createTimer('Folder Loading');
+
+    try {
+      const generateImageFilenames = (): string[] => {
+        return Array.from({ length: 10 }, (_, index) => `person-${index}.png`);
+      };
+
+      const result = await dataService.loadSampleDataFolder(
+        '/sample-data/sample-data.json',
+        generateImageFilenames()
+      );
+      
+      setLoadedData(result.data);
+      setLoadedImages(result.images);
+
+      // Handle validation warnings
+      if (result.validation.warnings.length > 0) {
+        setValidationWarnings(result.validation.warnings);
+        console.warn('Image reference warnings:', result.validation.warnings);
+      }
+
+      // Trigger callback with loaded data
+      onDataLoad(result.data, result.images);
+
+      // Handle validation warnings if any
+      if (result.validation.warnings.length > 0 && onValidationErrors) {
+        // Convert warnings to ValidationError format
+        const validationErrors: ValidationError[] = result.validation.warnings.map((warning, index) => ({
+          field: 'picture',
+          message: warning,
+          value: '',
+          row: index + 1
+        }));
+        onValidationErrors(validationErrors);
+      }
+
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          // User cancelled the folder selection
+          return;
+        }
+
+        if (error.message.includes('JSON')) {
+          onError(`JSON parsing error: ${errorService.sanitizeErrorMessage(error)}`);
+        } else if (error.message.includes('No JSON files')) {
+          onError('No JSON files found in the selected folder. Please select a folder containing at least one JSON file.');
+        } else {
+          errorService.handleDataFolderError(error);
+          onError(`Failed to load folder: ${errorService.sanitizeErrorMessage(error)}`);
+        }
+      } else {
+        onError('Failed to load folder. Please try again.');
+      }
+    } finally {
+      timer.stop();
+      setIsLoading(false);
+    }
+  };
+
   // Check if File System Access API is supported
   const isFileSystemAccessSupported = 'showDirectoryPicker' in window;
 
@@ -118,33 +181,43 @@ export const DataLoader: React.FC<DataLoaderProps> = ({ onDataLoad, onError, onV
             Choose a folder containing JSON data files and images (PNG, JPG, JPEG).
           </p>
 
-          {isFileSystemAccessSupported ? (
-            <button
-              onClick={handleFolderSelect}
-              disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Loading...' : 'Select Folder'}
-            </button>
-          ) : (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
-                    Browser Not Supported
-                  </h3>
-                  <div className="mt-2 text-sm text-yellow-700">
-                    <p>Folder selection requires a modern browser like Chrome, Edge, or Safari. Please update your browser to use this feature.</p>
+          <div className="flex items-center space-x-4">
+            {isFileSystemAccessSupported ? (
+              <button
+                onClick={handleFolderSelect}
+                disabled={isLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Loading...' : 'Select Folder'}
+              </button>
+            ) : (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800">
+                      Browser Not Supported
+                    </h3>
+                    <div className="mt-2 text-sm text-yellow-700">
+                      <p>Folder selection requires a modern browser like Chrome, Edge, or Safari. Please update your browser to use this feature.</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+
+            <button
+              onClick={handleSampleData}
+              disabled={isLoading}
+              className="px-4 py-2 text-sm font-medium bg-gray-200 text-gray-700 border border-transparent rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Loading...' : 'Sample Data'}
+            </button>
+          </div>
 
           {folderName && (
             <p className="text-sm text-green-600 mt-2">

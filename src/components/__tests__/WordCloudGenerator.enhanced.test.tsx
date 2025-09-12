@@ -140,7 +140,7 @@ describe('WordCloudGenerator - Enhanced Features', () => {
         />
       );
 
-      expect(screen.getByText('Generating PDF...')).toBeInTheDocument();
+      expect(screen.getByText('Generating image...')).toBeInTheDocument();
     });
 
     it('should show configuration indicator', () => {
